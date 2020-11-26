@@ -100,7 +100,7 @@ To use another class instead default one you can update your connection in:
 ]
 ```
 
-## Troubleshoot
+## # Troubleshoot
 
 #### `504 Bad gateway` error
 
