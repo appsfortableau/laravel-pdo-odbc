@@ -2,6 +2,8 @@
 
 This intergrates almost natively with Laravel Eloquent. Its a fork from `abram/laravel-odbc` to make it standalone next the `illuminate/database` without Laravel. But it will run with Laravel.
 
+This package does not use the `odbc_*` functions, but the `PDO` class to make the intergration with eloquent much easier and more flawless.
+
 ## # How to install
 
 > `composer require yoramdelangen/laravel-pdo-odbc` To add source in your project
