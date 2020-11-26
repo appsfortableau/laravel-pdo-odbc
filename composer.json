@@ -3,6 +3,7 @@
   "description": "PDO ODBC integration for Laravel framework ",
   "type": "library",
   "homepage": "https://github.com/yoramdelangen/laravel-odbc",
+  "license": "MIT",
   "authors": [
     {
       "name": "Andrea Abram",
