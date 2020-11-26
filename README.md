@@ -4,7 +4,7 @@ This intergrates almost natively with Laravel Eloquent. Its a fork from `abram/l
 
 ## # How to install
 
-> `composer require yoramdelangen/laravel-odbc` To add source in your project
+> `composer require yoramdelangen/laravel-pdo-odbc` To add source in your project
 
 ## # Usage Instructions
 
