@@ -1,31 +1,39 @@
 {
-	"name": "abram/laravel-odbc",
-	"description": "ODBC integration for Laravel framework ",
-	"type": "library",
-	"homepage": "https://github.com/andreossido/laravel-odbc",
-	"authors": [
-		{
-			"name": "Andrea Abram",
-			"email": "andreossido@gmail.com",
-			"homepage": "https://github.com/andreossido",
-			"role": "Developer"
-		}
-	],
-	"require": {
-		"php": "^5.3.3 || >=7.0",
-		"illuminate/database": "~5.1 || >= 6.0",
-		"illuminate/support": "~5.1 || >= 6.0"
-	},
-	"autoload": {
-		"classmap": [
-			"src"
-		]
-	},
-	"extra": {
-		"laravel": {
-			"providers": [
-				"Abram\\Odbc\\ODBCServiceProvider"
-			]
-		}
-	}
+  "name": "yoramdelangen/laravel-pdo-odbc",
+  "description": "PDO ODBC integration for Laravel framework ",
+  "type": "library",
+  "homepage": "https://github.com/yoramdelangen/laravel-odbc",
+  "authors": [
+    {
+      "name": "Andrea Abram",
+      "email": "andreossido@gmail.com",
+      "homepage": "https://github.com/andreossido",
+      "role": "Developer"
+    },
+    {
+      "name": "Yoram de Langen",
+      "email": "yoramdelangen@gmail.com",
+      "homepage": "https://github.com/yoramdelangen",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.3",
+    "ext-odbc": "*",
+    "ext-pdo_odbc": "*",
+    "illuminate/database": ">= 7.0",
+    "illuminate/support": ">= 7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "LaravelPdoOdbc\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "LaravelPdoOdbc\\Odbc\\ODBCServiceProvider"
+      ]
+    }
+  }
 }

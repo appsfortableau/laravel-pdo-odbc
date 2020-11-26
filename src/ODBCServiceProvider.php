@@ -1,10 +1,10 @@
 <?php
 
-namespace Abram\Odbc;
+namespace LaravelPdoOdbc\Odbc;
 
-use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\DatabaseManager;
 
 class ODBCServiceProvider extends ServiceProvider
 {
@@ -16,12 +16,8 @@ class ODBCServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->resolving('db', function ($db) {
-            /** @var DatabaseManager $db */
-            $db->extend('odbc', function ($config, $name) {
-                $pdoConnection = (new ODBCConnector())->connect($config);
-                $connection = new ODBCConnection($pdoConnection, $config['database'], isset($config['prefix']) ? $config['prefix'] : '', $config);
-                return $connection;
-            });
+            /* @var DatabaseManager $db */
+            $db->extend('odbc', ODBCConnector::registerClosure());
         });
     }
 
