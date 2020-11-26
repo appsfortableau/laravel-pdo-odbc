@@ -1,6 +1,6 @@
 <?php
 
-namespace LaravelPdoOdbc\Odbc;
+namespace LaravelPdoOdbc;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;

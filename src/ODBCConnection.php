@@ -1,6 +1,6 @@
 <?php
 
-namespace LaravelPdoOdbc\Odbc;
+namespace LaravelPdoOdbc;
 
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Processors\Processor;

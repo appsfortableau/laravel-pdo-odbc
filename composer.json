@@ -33,7 +33,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "LaravelPdoOdbc\\Odbc\\ODBCServiceProvider"
+        "LaravelPdoOdbc\\ODBCServiceProvider"
       ]
     }
   }

@@ -1,6 +1,6 @@
 <?php
 
-namespace LaravelPdoOdbc\Odbc;
+namespace LaravelPdoOdbc;
 
 use Illuminate\Support\Arr;
 use Illuminate\Database\Connectors\Connector;
