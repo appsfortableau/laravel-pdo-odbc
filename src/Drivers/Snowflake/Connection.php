@@ -1,12 +1,26 @@
 <?php
 
-namespace LaravelPdoOdbc;
+namespace LaravelPdoOdbc\Drivers\Snowflake;
 
-use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Processors\Processor as Processor;
+use LaravelPdoOdbc\ODBCConnection;
+use Illuminate\Database\Query\Grammars\MySqlGrammar as QueryGrammer;
+use Illuminate\Database\Query\Processors\MySqlProcessor as Processor;
+use Illuminate\Database\Schema\Grammars\MySqlGrammar as SchemaGrammer;
 
-class ODBCConnection extends Connection
+class Connection extends ODBCConnection
 {
+    /**
+     * @inheritdoc
+     */
+    public function getSchemaBuilder()
+    {
+        if (is_null($this->schemaGrammar)) {
+            $this->useDefaultSchemaGrammar();
+        }
+
+        return new SchemaBuilder($this);
+    }
+
     public function getDefaultQueryGrammar()
     {
         $queryGrammar = $this->getConfig('options.grammar.query');
@@ -15,7 +29,7 @@ class ODBCConnection extends Connection
             return new $queryGrammar();
         }
 
-        return parent::getDefaultQueryGrammar();
+        return new QueryGrammer();
     }
 
     public function getDefaultSchemaGrammar()
@@ -26,7 +40,7 @@ class ODBCConnection extends Connection
             return new $schemaGrammar();
         }
 
-        return parent::getDefaultSchemaGrammar();
+        return new SchemaGrammer();
     }
 
     /**

@@ -4,10 +4,11 @@ namespace LaravelPdoOdbc;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use LaravelPdoOdbc\Contracts\OdbcDriver;
 use Illuminate\Database\Connectors\Connector;
 use Illuminate\Database\Connectors\ConnectorInterface;
 
-class ODBCConnector extends Connector implements ConnectorInterface
+class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
 {
     /**
      * Establish a database connection.
@@ -22,7 +23,7 @@ class ODBCConnector extends Connector implements ConnectorInterface
 
         $dsn = Arr::get($config, 'dsn');
 
-        if (!Str::contains('odbc:', $dsn)) {
+        if (! Str::contains('odbc:', $dsn)) {
             $dsn = 'odbc:'.$dsn;
         }
 
@@ -31,7 +32,7 @@ class ODBCConnector extends Connector implements ConnectorInterface
         return $connection;
     }
 
-    public static function registerClosure()
+    public static function registerDriver()
     {
         return function ($config, $name) {
             $config['database'] = $config['database'] ?? null;
