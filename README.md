@@ -45,7 +45,7 @@ or when you do not have a datasource configured within your ODBC Manager:
 ```PHP
 'providers' => [
   ...
-  LaravelPdoOdbc\Odbc\ODBCServiceProvider::class
+  LaravelPdoOdbc\ODBCServiceProvider::class
 ]
 ```
 
