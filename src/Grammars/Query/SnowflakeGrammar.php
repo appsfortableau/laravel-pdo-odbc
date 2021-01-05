@@ -132,10 +132,7 @@ class SnowflakeGrammar extends Grammar
      */
     public function compileTruncate(Builder $query)
     {
-        return [
-            'delete from sqlite_sequence where name = ?' => [$query->from],
-            'delete from '.$this->wrapTable($query->from) => [],
-        ];
+        return 'trunate table '.$this->wrapTable($query->from);
     }
 
     /**
