@@ -34,9 +34,9 @@ trait Snowflake
     {
         return collect($segments)->map(function ($segment, $key) use ($segments) {
             return 0 === $key && count($segments) > 1
-                            ? $this->wrapTable($segment)
-                            // Original ->wraValue, but this is always called for columns segments
-                            : $this->wrapColumn($segment);
+                ? $this->wrapTable($segment)
+                // Original ->wraValue, but this is always called for columns segments
+                : $this->wrapColumn($segment);
         })->implode('.');
     }
 
