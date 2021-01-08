@@ -14,6 +14,10 @@ class Connection extends ODBCConnection
      */
     public function getSchemaBuilder()
     {
+        if (is_null($this->schemaGrammar)) {
+            $this->useDefaultSchemaGrammar();
+        }
+
         return new SchemaBuilder($this);
     }
 
