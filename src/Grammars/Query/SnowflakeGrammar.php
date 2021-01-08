@@ -7,9 +7,12 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar;
+use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
 
 class SnowflakeGrammar extends Grammar
 {
+    use SnowflakeConcern;
+
     /**
      * All of the available clause operators.
      *

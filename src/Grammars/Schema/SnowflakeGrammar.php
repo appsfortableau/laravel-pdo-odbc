@@ -10,7 +10,7 @@ use Illuminate\Support\Fluent;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Grammars\Grammar;
-
+use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
 /**
  * More documentation on Snowflake columns:
  * https://docs.snowflake.com/en/sql-reference/intro-summary-data-types.html
@@ -19,6 +19,8 @@ use Illuminate\Database\Schema\Grammars\Grammar;
  */
 class SnowflakeGrammar extends Grammar
 {
+    use SnowflakeConcern;
+
     /**
      * The possible column modifiers.
      *
@@ -995,18 +997,24 @@ class SnowflakeGrammar extends Grammar
     }
 
     /**
-     * Wrap a single string in keyword identifiers.
+     * Compile the blueprint's column definitions.
      *
-     * @param string $value
-     *
-     * @return string
+     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
+     * @return array
      */
-    protected function wrapValue($value)
+    protected function getColumns(Blueprint $blueprint)
     {
-        if ('*' !== $value) {
-            return ''.$value.'';
+        $columns = [];
+
+        foreach ($blueprint->getAddedColumns() as $column) {
+            // Each of the column types have their own compiler functions which are tasked
+            // with turning the column definition into its SQL format for this platform
+            // used by the connection. The column's modifiers are compiled and added.
+            $sql = str_replace("'", '"', $this->wrap($column)).' '.$this->getType($column);
+
+            $columns[] = $this->addModifiers($sql, $blueprint, $column);
         }
 
-        return $value;
+        return $columns;
     }
 }
