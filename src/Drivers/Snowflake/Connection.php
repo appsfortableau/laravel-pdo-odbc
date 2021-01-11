@@ -58,4 +58,36 @@ class Connection extends ODBCConnection
 
         return new Processor();
     }
+
+    /**
+     * Run an insert statement against the database.
+     *
+     * @param  string  $query
+     * @param  array  $bindings
+     * @return bool
+     */
+    public function insert($query, $bindings = [])
+    {
+        dd('done', $this->statement($query, $bindings));
+        return $this->statement($query, $bindings);
+    }
+
+    // /**
+    //  * Bind values to their parameters in the given statement.
+    //  *
+    //  * @param  \PDOStatement  $statement
+    //  * @param  array  $bindings
+    //  * @return void
+    //  */
+    // public function bindValues($statement, $bindings)
+    // {
+    //     dd('done', $statement);
+    //     foreach ($bindings as $key => $value) {
+    //         $statement->bindValue(
+    //             is_string($key) ? $key : $key + 1,
+    //             $value,
+    //             is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+    //         );
+    //     }
+    // }
 }

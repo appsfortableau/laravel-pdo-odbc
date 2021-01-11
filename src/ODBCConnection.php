@@ -30,6 +30,15 @@ class ODBCConnection extends Connection
     }
 
     /**
+     * Get current fetch mode from the connection.
+     * Default should be: PDO::FETCH_OBJ.
+     */
+    public function getFetchMode(): int
+    {
+        return $this->fetchMode;
+    }
+
+    /**
      * Get the default post processor instance.
      *
      * @return ODBCProcessor
