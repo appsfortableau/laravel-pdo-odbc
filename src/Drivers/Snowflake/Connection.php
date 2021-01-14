@@ -2,15 +2,17 @@
 
 namespace LaravelPdoOdbc\Drivers\Snowflake;
 
+use function count;
+use function is_null;
 use LaravelPdoOdbc\ODBCConnection;
-use LaravelPdoOdbc\Grammars\Query\SnowflakeGrammar as QueryGrammer;
 use LaravelPdoOdbc\Processors\SnowflakeProcessor as Processor;
+use LaravelPdoOdbc\Grammars\Query\SnowflakeGrammar as QueryGrammer;
 use LaravelPdoOdbc\Grammars\Schema\SnowflakeGrammar as SchemaGrammer;
 
 class Connection extends ODBCConnection
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getSchemaBuilder()
     {
@@ -44,6 +46,45 @@ class Connection extends ODBCConnection
     }
 
     /**
+     * Execute an SQL statement and return the boolean result.
+     *
+     * @param string $query
+     * @param array  $bindings
+     *
+     * @return bool
+     */
+    public function statement($query, $bindings = [])
+    {
+        return $this->run($query, $bindings, function ($query, $bindings) {
+            if ($this->pretending()) {
+                return true;
+            }
+
+            // only use the prepare if there are bindings
+            if (0 === count($bindings)) {
+                $affected = $this->getPdo()->query($query);
+
+                if (false === $affected) {
+                    $err = $conn->errorInfo();
+                    if ('00000' === $err[0] || '01000' === $err[0]) {
+                        return true;
+                    }
+                }
+
+                return (bool) $affected;
+            }
+
+            $statement = $this->getPdo()->prepare($query);
+
+            $this->bindValues($statement, $this->prepareBindings($bindings));
+
+            $this->recordsHaveBeenModified();
+
+            return $statement->execute();
+        });
+    }
+
+    /**
      * Get the default post processor instance.
      *
      * @return ODBCProcessor
@@ -58,36 +99,4 @@ class Connection extends ODBCConnection
 
         return new Processor();
     }
-
-    /**
-     * Run an insert statement against the database.
-     *
-     * @param  string  $query
-     * @param  array  $bindings
-     * @return bool
-     */
-    public function insert($query, $bindings = [])
-    {
-        dd('done', $this->statement($query, $bindings));
-        return $this->statement($query, $bindings);
-    }
-
-    // /**
-    //  * Bind values to their parameters in the given statement.
-    //  *
-    //  * @param  \PDOStatement  $statement
-    //  * @param  array  $bindings
-    //  * @return void
-    //  */
-    // public function bindValues($statement, $bindings)
-    // {
-    //     dd('done', $statement);
-    //     foreach ($bindings as $key => $value) {
-    //         $statement->bindValue(
-    //             is_string($key) ? $key : $key + 1,
-    //             $value,
-    //             is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
-    //         );
-    //     }
-    // }
 }
