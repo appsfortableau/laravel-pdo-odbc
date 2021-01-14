@@ -36,8 +36,9 @@ class SnowflakeProcessor extends Processor
 
         $connection->insert($sql, $values);
 
-        $result = $connection->selectOne('select last_query_id() as last_insert_id');
-        $id = $result->LAST_INSERT_ID ?? null;
+        $result = $connection->selectOne('select * from "'.$query->from.'" at(statement=>last_query_id())');
+        // hacky.... TODO we should fix this proper way...
+        $id = array_values((array) $result)[0];
 
         return is_numeric($id) ? (int) $id : $id;
     }
