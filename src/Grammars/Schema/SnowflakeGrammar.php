@@ -3,6 +3,7 @@
 namespace LaravelPdoOdbc\Grammars\Schema;
 
 use function is_int;
+use function is_bool;
 use function is_null;
 use RuntimeException;
 use function in_array;
@@ -11,11 +12,12 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Grammars\Grammar;
 use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
+
 /**
  * More documentation on Snowflake columns:
  * https://docs.snowflake.com/en/sql-reference/intro-summary-data-types.html
  * and even semi structures (usefull for JSON stuff):
- * https://docs.snowflake.com/en/sql-reference/data-types-semistructured.html
+ * https://docs.snowflake.com/en/sql-reference/data-types-semistructured.html.
  */
 class SnowflakeGrammar extends Grammar
 {
@@ -63,9 +65,6 @@ class SnowflakeGrammar extends Grammar
      *
      * Snowflake documentation found here: https://docs.snowflake.com/en/sql-reference/sql/alter-table.html
      *
-     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
-     * @param  \Illuminate\Support\Fluent  $command
-     * @param  \Illuminate\Database\Connection  $connection
      * @return array
      */
     public function compileRenameColumn(Blueprint $blueprint, Fluent $command, Connection $connection)
@@ -999,7 +998,6 @@ class SnowflakeGrammar extends Grammar
     /**
      * Compile the blueprint's column definitions.
      *
-     * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
      * @return array
      */
     protected function getColumns(Blueprint $blueprint)
@@ -1016,5 +1014,27 @@ class SnowflakeGrammar extends Grammar
         }
 
         return $columns;
+    }
+
+    /**
+     * Format a value so that it can be used in "default" clauses.
+     *
+     * @param mixed $value
+     *
+     * @return string
+     */
+    protected function getDefaultValue($value)
+    {
+        if ($value instanceof Expression) {
+            return $value;
+        }
+
+        if (is_bool($value)) {
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'TRUE' : 'FALSE';
+        } elseif (is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return "'".(string) $value."'";
     }
 }
