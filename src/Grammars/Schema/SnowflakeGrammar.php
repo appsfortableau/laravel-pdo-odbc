@@ -1031,6 +1031,8 @@ class SnowflakeGrammar extends Grammar
 
         if (is_bool($value)) {
             return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'TRUE' : 'FALSE';
+        } elseif (is_float($value)) {
+            return (float) $value;
         } elseif (is_numeric($value)) {
             return (int) $value;
         }
