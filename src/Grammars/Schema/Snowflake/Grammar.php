@@ -1,25 +1,30 @@
 <?php
 
-namespace LaravelPdoOdbc\Grammars\Schema;
+namespace LaravelPdoOdbc\Grammars\Schema\Snowflake;
 
 use function is_int;
-use function is_bool;
-use function is_null;
 use RuntimeException;
+use function is_null;
 use function in_array;
+use function is_float;
+use Illuminate\Support\Str;
 use Illuminate\Support\Fluent;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Schema\Grammars\Grammar;
+use Illuminate\Database\Schema\ColumnDefinition;
+use Illuminate\Database\Schema\Grammars\Grammar as BaseGrammar;
 use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
 
 /**
  * More documentation on Snowflake columns:
- * https://docs.snowflake.com/en/sql-reference/intro-summary-data-types.html
+ *     https://docs.snowflake.com/en/sql-reference/intro-summary-data-types.html
  * and even semi structures (usefull for JSON stuff):
- * https://docs.snowflake.com/en/sql-reference/data-types-semistructured.html.
+ *     https://docs.snowflake.com/en/sql-reference/data-types-semistructured.html.
+ *
+ * Rules for altering can be found here:
+ *     https://docs.snowflake.com/en/sql-reference/sql/alter-table-column.html
  */
-class SnowflakeGrammar extends Grammar
+class Grammar extends BaseGrammar
 {
     use SnowflakeConcern;
 
@@ -48,6 +53,16 @@ class SnowflakeGrammar extends Grammar
     public function compileTableExists()
     {
         return "select * from information_schema.tables where table_schema = ? and table_name = ? and table_type = 'BASE TABLE'";
+    }
+
+    /**
+     * Compile the query to determine the list of tables.
+     *
+     * @return string
+     */
+    public function compileTableDetails(string $table)
+    {
+        return 'select * from "INFORMATION_SCHEMA"."COLUMNS" where TABLE_NAME = \''.$table.'\' order by ordinal_position';
     }
 
     /**
@@ -116,7 +131,22 @@ class SnowflakeGrammar extends Grammar
      */
     public function compileAdd(Blueprint $blueprint, Fluent $command)
     {
-        $columns = $this->prefixArray('add', $this->getColumns($blueprint));
+        $columns = $this->prefixArray('add column', $this->getColumns($blueprint));
+
+        return array_values(array_merge(
+            ['alter table '.$this->wrapTable($blueprint).' '.implode(', ', $columns)],
+            $this->compileAutoIncrementStartingValues($blueprint)
+        ));
+    }
+
+    /**
+     * Compile an add column command.
+     *
+     * @return array
+     */
+    public function compileChangeColumn(Blueprint $blueprint, Fluent $command)
+    {
+        $columns = $this->prefixArray('modify column', $this->getChangedColumns($blueprint));
 
         return array_values(array_merge(
             ['alter table '.$this->wrapTable($blueprint).' '.implode(', ', $columns)],
@@ -132,7 +162,7 @@ class SnowflakeGrammar extends Grammar
     public function compileAutoIncrementStartingValues(Blueprint $blueprint)
     {
         return collect($blueprint->autoIncrementingStartingValues())->map(function ($value, $column) use ($blueprint) {
-            return 'alter table '.$this->wrapTable($blueprint->getTable()).' auto_increment = '.$value;
+            return 'alter table '.$this->wrapTable($blueprint->getTable()).' autoincrement start '.$value;
         })->all();
     }
 
@@ -438,6 +468,18 @@ class SnowflakeGrammar extends Grammar
     }
 
     /**
+     * Compile a change column command into a series of SQL statements.
+     *
+     * @throws RuntimeException
+     *
+     * @return array
+     */
+    public function compileChange(Blueprint $blueprint, Fluent $command, Connection $connection)
+    {
+        return ChangeColumn::compile($this, $blueprint, $command, $connection);
+    }
+
+    /**
      * Create the main create table clause.
      *
      * @param \Illuminate\Database\Schema\Blueprint $blueprint
@@ -593,25 +635,25 @@ class SnowflakeGrammar extends Grammar
         return 'int';
     }
 
-    // /**
-    //  * Create the column definition for a medium integer type.
-    //  *
-    //  * @return string
-    //  */
-    // protected function typeMediumInteger(Fluent $column)
-    // {
-    //     return 'mediumint';
-    // }
+    /**
+     * Create the column definition for a medium integer type.
+     *
+     * @return string
+     */
+    protected function typeMediumInteger(Fluent $column)
+    {
+        return 'smallint';
+    }
 
-    // /**
-    //  * Create the column definition for a tiny integer type.
-    //  *
-    //  * @return string
-    //  */
-    // protected function typeTinyInteger(Fluent $column)
-    // {
-    //     return 'tinyint';
-    // }
+    /**
+     * Create the column definition for a tiny integer type.
+     *
+     * @return string
+     */
+    protected function typeTinyInteger(Fluent $column)
+    {
+        return 'tinyint';
+    }
 
     /**
      * Create the column definition for a small integer type.
@@ -931,7 +973,7 @@ class SnowflakeGrammar extends Grammar
     protected function modifyDefault(Blueprint $blueprint, Fluent $column)
     {
         if (! is_null($column->default)) {
-            return ' default '.$this->getDefaultValue($column->default);
+            return ' default '.$this->getDefaultValue($column->default, $column->type);
         }
     }
 
@@ -943,7 +985,7 @@ class SnowflakeGrammar extends Grammar
     protected function modifyIncrement(Blueprint $blueprint, Fluent $column)
     {
         if (in_array($column->type, $this->serials, true) && $column->autoIncrement) {
-            return ' auto_increment primary key';
+            return ' autoincrement primary key';
         }
     }
 
@@ -1002,18 +1044,46 @@ class SnowflakeGrammar extends Grammar
      */
     protected function getColumns(Blueprint $blueprint)
     {
-        $columns = [];
+        return $this->getColumnModifiers($blueprint->getAddedColumns(), $blueprint);
+    }
 
-        foreach ($blueprint->getAddedColumns() as $column) {
+    /**
+     * Compile the blueprint's column definitions for changed columns.
+     *
+     * @return array
+     */
+    protected function getChangedColumns(Blueprint $blueprint)
+    {
+        $columns = $this->getColumnModifiers($blueprint->getChangedColumns(), $blueprint);
+
+        // by default all columns are nullable only keep not null on change
+        return array_map(function ($column) {
+            if (!Str::contains($column, 'not null') && Str::contains($column, 'null')) {
+                $column = str_replace(' null', '', $column);
+            }
+            return $column;
+        }, $columns);
+    }
+
+    /**
+     * Generate columns based on given Blueprint.
+     *
+     * @return array
+     */
+    protected function getColumnModifiers(array $columns, Blueprint $blueprint)
+    {
+        $parsedColumns = [];
+
+        foreach ($columns as $column) {
             // Each of the column types have their own compiler functions which are tasked
             // with turning the column definition into its SQL format for this platform
             // used by the connection. The column's modifiers are compiled and added.
             $sql = str_replace("'", '"', $this->wrap($column)).' '.$this->getType($column);
 
-            $columns[] = $this->addModifiers($sql, $blueprint, $column);
+            $parsedColumns[] = $this->addModifiers($sql, $blueprint, $column);
         }
 
-        return $columns;
+        return $parsedColumns;
     }
 
     /**
@@ -1023,13 +1093,13 @@ class SnowflakeGrammar extends Grammar
      *
      * @return string
      */
-    protected function getDefaultValue($value)
+    protected function getDefaultValue($value, $type = null)
     {
         if ($value instanceof Expression) {
             return $value;
         }
 
-        if (is_bool($value)) {
+        if ('boolean' === $type) {
             return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'TRUE' : 'FALSE';
         } elseif (is_float($value)) {
             return (float) $value;

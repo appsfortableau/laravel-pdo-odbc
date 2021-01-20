@@ -7,7 +7,7 @@ use function is_null;
 use LaravelPdoOdbc\ODBCConnection;
 use LaravelPdoOdbc\Processors\SnowflakeProcessor as Processor;
 use LaravelPdoOdbc\Grammars\Query\SnowflakeGrammar as QueryGrammer;
-use LaravelPdoOdbc\Grammars\Schema\SnowflakeGrammar as SchemaGrammer;
+use LaravelPdoOdbc\Grammars\Schema\Snowflake\Grammar as SchemaGrammer;
 
 class Connection extends ODBCConnection
 {
