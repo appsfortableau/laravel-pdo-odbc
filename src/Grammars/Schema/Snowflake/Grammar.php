@@ -3,15 +3,14 @@
 namespace LaravelPdoOdbc\Grammars\Schema\Snowflake;
 
 use function is_int;
-use RuntimeException;
 use function is_null;
+use RuntimeException;
 use function in_array;
 use function is_float;
 use Illuminate\Support\Str;
 use Illuminate\Support\Fluent;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Schema\ColumnDefinition;
 use Illuminate\Database\Schema\Grammars\Grammar as BaseGrammar;
 use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
 
@@ -146,10 +145,10 @@ class Grammar extends BaseGrammar
      */
     public function compileChangeColumn(Blueprint $blueprint, Fluent $command)
     {
-        $columns = $this->prefixArray('modify column', $this->getChangedColumns($blueprint));
+        $prefix = 'alter table '.$this->wrapTable($blueprint).'modify column';
+        $columns = $this->prefixArray($prefix, $this->getChangedColumns($blueprint));
 
-        return array_values(array_merge(
-            ['alter table '.$this->wrapTable($blueprint).' '.implode(', ', $columns)],
+        return array_values(array_merge($columns,
             $this->compileAutoIncrementStartingValues($blueprint)
         ));
     }
@@ -1044,7 +1043,9 @@ class Grammar extends BaseGrammar
      */
     protected function getColumns(Blueprint $blueprint)
     {
-        return $this->getColumnModifiers($blueprint->getAddedColumns(), $blueprint);
+        return $this->handleNullOrNotNull(
+            $this->getColumnModifiers($blueprint->getAddedColumns(), $blueprint)
+        );
     }
 
     /**
@@ -1054,15 +1055,36 @@ class Grammar extends BaseGrammar
      */
     protected function getChangedColumns(Blueprint $blueprint)
     {
-        $columns = $this->getColumnModifiers($blueprint->getChangedColumns(), $blueprint);
-
         // by default all columns are nullable only keep not null on change
-        return array_map(function ($column) {
-            if (!Str::contains($column, 'not null') && Str::contains($column, 'null')) {
+        return $this->handleNullOrNotNull(
+            $this->getColumnModifiers($blueprint->getChangedColumns(), $blueprint)
+        );
+    }
+
+    /**
+     * Handle NULL or NOT NULL statements from within the queries.
+     * Make seperate query's and push them into the columns array.
+     */
+    protected function handleNullOrNotNull(array $columns): array
+    {
+        foreach ($columns as $i => $column) {
+            if (Str::contains($column, ' not null')) {
+                // should add not null
+                // query: "column" set not null
+                preg_match('/(\".+\"\s)/', $column, $match);
+                $columns[] = $match[0].'set not null';
+                $column = str_replace(' not null', '', $column);
+            } elseif (Str::contains($column, ' null')) {
+                // query: "column" drop not null
+                preg_match('/(\".+\"\s)/', $column, $match);
+                $columns[] = $match[0].'drop not null';
                 $column = str_replace(' null', '', $column);
             }
-            return $column;
-        }, $columns);
+
+            $columns[$i] = $column;
+        }
+
+        return $columns;
     }
 
     /**
