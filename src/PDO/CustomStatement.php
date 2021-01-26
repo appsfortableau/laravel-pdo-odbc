@@ -50,7 +50,9 @@ class CustomStatement extends PDOStatement
             list($val, $type) = $param;
 
             // cast type
-            if (PDO::PARAM_INT === $type || is_numeric($val)) {
+            if (is_float($val)) {
+                $val = (float) $val;
+            } elseif (PDO::PARAM_INT === $type || is_numeric($val)) {
                 $val = (int) $val;
             } elseif (PDO::PARAM_BOOL === $type) {
                 $val = (bool) filter_var($val, FILTER_VALIDATE_BOOLEAN);
@@ -62,6 +64,7 @@ class CustomStatement extends PDOStatement
 
             if (is_numeric($key)) {
                 $query = str_replace_first('?', $val, $query);
+
                 continue;
             }
 
