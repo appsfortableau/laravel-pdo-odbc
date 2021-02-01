@@ -20,8 +20,6 @@
   ],
   "require": {
     "php": ">=7.3",
-    "ext-odbc": "*",
-    "ext-pdo_odbc": "*",
     "illuminate/database": ">= 7.0",
     "illuminate/support": ">= 7.0"
   },
