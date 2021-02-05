@@ -522,9 +522,9 @@ class Grammar extends BaseGrammar
         // blueprint itself or on the root configuration for the connection that the
         // table is being created on. We will add these to the create table query.
         if (isset($blueprint->charset)) {
-            $sql .= ' encoding = ' . $blueprint->charset;
+            $sql .= ' default character set ' . $blueprint->charset;
         } elseif (!is_null($charset = $connection->getConfig('charset'))) {
-            $sql .= ' encoding = ' . $charset;
+            $sql .= ' default character set ' . $charset;
         }
 
         // Next we will add the collation to the create table statement if one has been
@@ -683,7 +683,11 @@ class Grammar extends BaseGrammar
      */
     protected function typeFloat(Fluent $column)
     {
-        return $this->typeDouble($column);
+        if ($column->total && $column->places) {
+            return "float({$column->total}, {$column->places})";
+        }
+
+        return 'float';
     }
 
     /**
@@ -945,7 +949,7 @@ class Grammar extends BaseGrammar
     protected function modifyCharset(Blueprint $blueprint, Fluent $column)
     {
         if (!is_null($column->charset)) {
-            return ' encoding = ' . $column->charset;
+            return ' character set ' . $column->charset;
         }
     }
 
@@ -1152,7 +1156,7 @@ class Grammar extends BaseGrammar
             return $value;
         }
 
-        if ('boolean' === $type) {
+        if ($type === 'boolean') {
             return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'TRUE' : 'FALSE';
         } elseif (is_float($value)) {
             return (float) $value;
