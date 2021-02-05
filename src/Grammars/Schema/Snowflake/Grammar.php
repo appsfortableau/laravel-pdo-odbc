@@ -51,7 +51,7 @@ class Grammar extends BaseGrammar
      */
     public function compileTableExists()
     {
-        return "select * from information_schema.tables where table_schema = ? and table_name = ? and table_type = 'BASE TABLE'";
+        return "select * from information_schema.tables where table_catalog = ? and table_name = ? and table_type = 'BASE TABLE'";
     }
 
     /**
@@ -71,7 +71,17 @@ class Grammar extends BaseGrammar
      */
     public function compileColumnListing()
     {
-        return 'select column_name as column_name from information_schema.columns where table_schema = ? and table_name = ?';
+        return 'select column_name as "column_name", data_type as "column_type", lower(is_nullable) as "is_nullable" from information_schema.columns where table_catalog = ? and table_name = ?';
+    }
+
+    /**
+     * Compile the query to determine the list of columns.
+     *
+     * @return string
+     */
+    public function compileGetColumnType()
+    {
+        return 'select column_name as "column_name", data_type as "column_type", numeric_precision as "numeric_precision", numeric_scale as "numeric_scale" from information_schema.columns where table_name = ? and column_name = ?';
     }
 
     /**
@@ -130,10 +140,11 @@ class Grammar extends BaseGrammar
      */
     public function compileAdd(Blueprint $blueprint, Fluent $command)
     {
-        $columns = $this->prefixArray('add column', $this->getColumns($blueprint));
+        $prefix = 'alter table '.$this->wrapTable($blueprint).' add column';
+        $columns = $this->prefixArray($prefix, $this->getColumns($blueprint));
 
         return array_values(array_merge(
-            ['alter table ' . $this->wrapTable($blueprint) . ' ' . implode(', ', $columns)],
+            $columns,
             $this->compileAutoIncrementStartingValues($blueprint)
         ));
     }
@@ -145,7 +156,7 @@ class Grammar extends BaseGrammar
      */
     public function compileChangeColumn(Blueprint $blueprint, Fluent $command)
     {
-        $prefix = 'alter table ' . $this->wrapTable($blueprint) . 'modify column';
+        $prefix = sprintf('alter table %s modify column', $this->wrapTable($blueprint));
         $columns = $this->prefixArray($prefix, $this->getChangedColumns($blueprint));
 
         return array_values(array_merge(
@@ -305,7 +316,7 @@ class Grammar extends BaseGrammar
     {
         $from = $this->wrapTable($blueprint);
 
-        return "rename table {$from} to " . $this->wrapTable($command->to);
+        return "alter table {$from} rename to ".$this->wrapTable($command->to);
     }
 
     /**
@@ -924,9 +935,10 @@ class Grammar extends BaseGrammar
      */
     protected function modifyUnsigned(Blueprint $blueprint, Fluent $column)
     {
-        if ($column->unsigned) {
-            return ' unsigned';
-        }
+        // if ($column->unsigned) {
+        //     return ' unsigned';
+        // }
+        return '';
     }
 
     /**
@@ -1048,8 +1060,9 @@ class Grammar extends BaseGrammar
      */
     protected function getColumns(Blueprint $blueprint)
     {
-        return $this->handleNullOrNotNull(
-            $this->getColumnModifiers($blueprint->getAddedColumns(), $blueprint)
+        return $this->handleNullables(
+            $this->getColumnModifiers($blueprint->getAddedColumns(), $blueprint),
+            false // mode Change
         );
     }
 
@@ -1061,8 +1074,9 @@ class Grammar extends BaseGrammar
     protected function getChangedColumns(Blueprint $blueprint)
     {
         // by default all columns are nullable only keep not null on change
-        return $this->handleNullOrNotNull(
-            $this->getColumnModifiers($blueprint->getChangedColumns(), $blueprint)
+        return $this->handleNullables(
+            $this->getColumnModifiers($blueprint->getChangedColumns(), $blueprint),
+            true // mode Change
         );
     }
 
@@ -1070,23 +1084,39 @@ class Grammar extends BaseGrammar
      * Handle NULL or NOT NULL statements from within the queries.
      * Make seperate query's and push them into the columns array.
      */
-    protected function handleNullOrNotNull(array $columns): array
+    protected function handleNullables(array $columns, bool $isChanging = false): array
     {
+        // get current state of the table
         foreach ($columns as $i => $column) {
-            if (Str::contains($column, ' not null')) {
-                // should add not null
-                // query: "column" set not null
-                preg_match('/(\".+\"\s)/', $column, $match);
-                $columns[] = $match[0] . 'set not null';
-                $column = str_replace(' not null', '', $column);
-            } elseif (Str::contains($column, ' null')) {
-                // query: "column" drop not null
-                preg_match('/(\".+\"\s)/', $column, $match);
-                $columns[] = $match[0] . 'drop not null';
-                $column = str_replace(' null', '', $column);
+            // on adding columns to the table
+            if (!$isChanging) {
+                if (! str_contains($column, ' not null') && str_contains($column, ' null')) {
+                    $column = str_replace(' null', '', $column);
+                }
+            }
+            // when changing the table
+            else if ($isChanging) {
+                // handle nullables
+                if (str_contains($column, ' not null')) {
+                    // query: "column" set not null
+                    preg_match('/(\".+\"\s)/', $column, $match);
+                    $columns[] = $match[0].'set not null';
+                    $column = str_replace(' not null', '', $column);
+                } elseif (str_contains($column, ' null')) {
+                    // query: "column" drop not null
+                    preg_match('/(\".+\"\s)/', $column, $match);
+                    $columns[] = $match[0].'drop not null';
+                    $column = str_replace(' null', '', $column);
+                }
+
+                // handle defaults, only sequence changes
+                if (str_contains($column, 'default') && !str_contains($column, '.nextval')) {
+                    $split = explode('default', $column);
+                    $column = reset($split);
+                }
             }
 
-            $columns[$i] = $column;
+            $columns[$i] = trim($column);
         }
 
         return $columns;

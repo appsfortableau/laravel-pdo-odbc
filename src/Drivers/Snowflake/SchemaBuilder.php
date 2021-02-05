@@ -35,6 +35,7 @@ class SchemaBuilder extends BaseBuilder
             $this->grammar->compileColumnListing(), [$this->connection->getDatabaseName(), $table]
         );
 
+
         return $this->connection->getPostProcessor()->processColumnListing($results);
     }
 
@@ -112,5 +113,32 @@ class SchemaBuilder extends BaseBuilder
         return $this->connection->select(
             $this->grammar->compileGetAllViews()
         );
+    }
+
+    /**
+     * Get the data type for the given column name.
+     *
+     * @param  string  $table
+     * @param  string  $column
+     * @return string
+     */
+    public function getColumnType($table, $column)
+    {
+        $table = $this->connection->getTablePrefix().$table;
+
+        $record = $this->connection->select(
+            $this->grammar->compileGetColumnType(),
+            [$table, $column]
+        );
+        $record = reset($record);
+
+        if (!$record) {
+            return null;
+        }
+
+        $record->numeric_precision = (int) $record->numeric_precision;
+        $record->numeric_scale = (int) $record->numeric_scale;
+
+        return $record;
     }
 }

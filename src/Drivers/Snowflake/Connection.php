@@ -64,7 +64,7 @@ class Connection extends ODBCConnection
             if (0 === count($bindings)) {
                 $affected = $this->getPdo()->query($query);
 
-                if (false === $affected) {
+                if (false === (bool) $affected) {
                     $err = $conn->errorInfo();
                     if ('00000' === $err[0] || '01000' === $err[0]) {
                         return true;
@@ -98,5 +98,59 @@ class Connection extends ODBCConnection
         }
 
         return new Processor();
+    }
+
+    /**
+     * Bind values to their parameters in the given statement.
+     *
+     * @param  \PDOStatement  $statement
+     * @param  array  $bindings
+     * @return void
+     */
+    public function bindValues($statement, $bindings)
+    {
+        foreach ($bindings as $key => $value) {
+
+            $type = \PDO::PARAM_STR;
+            if (is_bool($value)) {
+                $value = $value ? 'TRUE' : 'FALSE';
+            } elseif (is_numeric($value)) {
+                $type = \PDO::PARAM_INT;
+            }
+
+            $statement->bindValue(
+                is_string($key) ? $key : $key + 1,
+                $value,
+                $type
+            );
+        }
+    }
+
+    /**
+     * Prepare the query bindings for execution.
+     *
+     * @param  array  $bindings
+     * @return array
+     */
+    public function prepareBindings(array $bindings)
+    {
+        $grammar = $this->getQueryGrammar();
+
+        foreach ($bindings as $key => $value) {
+            // We need to transform all instances of DateTimeInterface into the actual
+            // date string. Each query grammar maintains its own date string format
+            // so we'll just ask the grammar for the format to get from the date.
+            if ($value instanceof DateTimeInterface) {
+                $bindings[$key] = $value->format($grammar->getDateFormat());
+            } elseif (is_bool($value)) {
+                $bindings[$key] = (bool) $value;
+            } elseif (is_float($value)) {
+                $bindings[$key] = (float) $value;
+            } elseif (is_numeric($value)) {
+                $bindings[$key] = (int) $value;
+            }
+        }
+
+        return $bindings;
     }
 }
