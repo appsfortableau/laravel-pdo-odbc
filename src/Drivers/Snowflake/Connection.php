@@ -65,7 +65,7 @@ class Connection extends ODBCConnection
                 $affected = $this->getPdo()->query($query);
 
                 if (false === (bool) $affected) {
-                    $err = $conn->errorInfo();
+                    $err = $affected->errorInfo();
                     if ('00000' === $err[0] || '01000' === $err[0]) {
                         return true;
                     }
@@ -140,7 +140,7 @@ class Connection extends ODBCConnection
             // We need to transform all instances of DateTimeInterface into the actual
             // date string. Each query grammar maintains its own date string format
             // so we'll just ask the grammar for the format to get from the date.
-            if ($value instanceof DateTimeInterface) {
+            if ($value instanceof \DateTimeInterface) {
                 $bindings[$key] = $value->format($grammar->getDateFormat());
             } elseif (is_bool($value)) {
                 $bindings[$key] = (bool) $value;

@@ -14,10 +14,11 @@ class SchemaBuilder extends BaseBuilder
      */
     public function hasTable($table)
     {
-        $table = $this->connection->getTablePrefix().$table;
+        $table = $this->connection->getTablePrefix() . $table;
 
         return count($this->connection->select(
-            $this->grammar->compileTableExists(), [$this->connection->getDatabaseName(), $table]
+            $this->grammar->compileTableExists(),
+            [$this->connection->getDatabaseName(), $table]
         )) > 0;
     }
 
@@ -29,10 +30,11 @@ class SchemaBuilder extends BaseBuilder
      */
     public function getColumnListing($table)
     {
-        $table = $this->connection->getTablePrefix().$table;
+        $table = $this->connection->getTablePrefix() . $table;
 
         $results = $this->connection->select(
-            $this->grammar->compileColumnListing(), [$this->connection->getDatabaseName(), $table]
+            $this->grammar->compileColumnListing(),
+            [$this->connection->getDatabaseName(), $table]
         );
 
 
@@ -124,7 +126,7 @@ class SchemaBuilder extends BaseBuilder
      */
     public function getColumnType($table, $column)
     {
-        $table = $this->connection->getTablePrefix().$table;
+        $table = $this->connection->getTablePrefix() . $table;
 
         $record = $this->connection->select(
             $this->grammar->compileGetColumnType(),

@@ -61,7 +61,7 @@ class Grammar extends BaseGrammar
      */
     public function compileTableDetails(string $table)
     {
-        return 'select * from information_schema.tables where table_name = \''.$table.'\' order by ordinal_position';
+        return 'select * from information_schema.tables where table_name = \'' . $table . '\' order by ordinal_position';
     }
 
     /**
@@ -140,7 +140,7 @@ class Grammar extends BaseGrammar
      */
     public function compileAdd(Blueprint $blueprint, Fluent $command)
     {
-        $prefix = 'alter table '.$this->wrapTable($blueprint).' add column';
+        $prefix = 'alter table ' . $this->wrapTable($blueprint) . ' add column';
         $columns = $this->prefixArray($prefix, $this->getColumns($blueprint));
 
         return array_values(array_merge(
@@ -173,7 +173,7 @@ class Grammar extends BaseGrammar
     public function compileAutoIncrementStartingValues(Blueprint $blueprint)
     {
         return collect($blueprint->autoIncrementingStartingValues())->map(function ($value, $column) use ($blueprint) {
-            return 'alter table '.$this->wrapTable($blueprint->getTable()).' autoincrement start '.$value;
+            return 'alter table ' . $this->wrapTable($blueprint->getTable()) . ' autoincrement start ' . $value;
         })->all();
     }
 
@@ -226,7 +226,7 @@ class Grammar extends BaseGrammar
      */
     public function compileDrop(Blueprint $blueprint, Fluent $command)
     {
-        return 'drop table '.$this->wrapTable($blueprint);
+        return 'drop table ' . $this->wrapTable($blueprint);
     }
 
     /**
@@ -236,7 +236,7 @@ class Grammar extends BaseGrammar
      */
     public function compileDropIfExists(Blueprint $blueprint, Fluent $command)
     {
-        return 'drop table if exists '.$this->wrapTable($blueprint);
+        return 'drop table if exists ' . $this->wrapTable($blueprint);
     }
 
     /**
@@ -248,7 +248,7 @@ class Grammar extends BaseGrammar
     {
         $columns = $this->prefixArray('drop', $this->wrapArray($command->columns));
 
-        return 'alter table '.$this->wrapTable($blueprint).' '.implode(', ', $columns);
+        return 'alter table ' . $this->wrapTable($blueprint) . ' ' . implode(', ', $columns);
     }
 
     /**
@@ -258,7 +258,7 @@ class Grammar extends BaseGrammar
      */
     public function compileDropPrimary(Blueprint $blueprint, Fluent $command)
     {
-        return 'alter table '.$this->wrapTable($blueprint).' drop primary key';
+        return 'alter table ' . $this->wrapTable($blueprint) . ' drop primary key';
     }
 
     /**
@@ -316,7 +316,7 @@ class Grammar extends BaseGrammar
     {
         $from = $this->wrapTable($blueprint);
 
-        return "alter table {$from} rename to ".$this->wrapTable($command->to);
+        return "alter table {$from} rename to " . $this->wrapTable($command->to);
     }
 
     /**
@@ -343,7 +343,7 @@ class Grammar extends BaseGrammar
      */
     public function compileDropAllTables($tables)
     {
-        return 'drop table '.implode(',', $this->wrapArray($tables));
+        return 'drop table ' . implode(',', $this->wrapArray($tables));
     }
 
     /**
@@ -355,7 +355,7 @@ class Grammar extends BaseGrammar
      */
     public function compileDropAllViews($views)
     {
-        return 'drop view '.implode(',', $this->wrapArray($views));
+        return 'drop view ' . implode(',', $this->wrapArray($views));
     }
 
     /**
@@ -365,7 +365,7 @@ class Grammar extends BaseGrammar
      */
     public function compileGetAllTables()
     {
-        return 'SHOW FULL TABLES WHERE table_type = \'BASE TABLE\'';
+        return 'SHOW TABLES';
     }
 
     /**
@@ -375,7 +375,7 @@ class Grammar extends BaseGrammar
      */
     public function compileGetAllViews()
     {
-        return 'SHOW FULL TABLES WHERE table_type = \'VIEW\'';
+        return 'SHOW VIEWS';
     }
 
     /**
@@ -522,9 +522,9 @@ class Grammar extends BaseGrammar
         // blueprint itself or on the root configuration for the connection that the
         // table is being created on. We will add these to the create table query.
         if (isset($blueprint->charset)) {
-            $sql .= ' encoding = '.$blueprint->charset;
-        } elseif (! is_null($charset = $connection->getConfig('charset'))) {
-            $sql .= ' encoding = '.$charset;
+            $sql .= ' encoding = ' . $blueprint->charset;
+        } elseif (!is_null($charset = $connection->getConfig('charset'))) {
+            $sql .= ' encoding = ' . $charset;
         }
 
         // Next we will add the collation to the create table statement if one has been
@@ -532,7 +532,7 @@ class Grammar extends BaseGrammar
         // connection that the query is targeting. We'll add it to this SQL query.
         if (isset($blueprint->collation)) {
             $sql .= " collate '{$blueprint->collation}'";
-        } elseif (! is_null($collation = $connection->getConfig('collation'))) {
+        } elseif (!is_null($collation = $connection->getConfig('collation'))) {
             $sql .= " collate '{$collation}'";
         }
 
@@ -549,9 +549,9 @@ class Grammar extends BaseGrammar
     protected function compileCreateEngine($sql, Connection $connection, Blueprint $blueprint)
     {
         if (isset($blueprint->engine)) {
-            return $sql.' engine = '.$blueprint->engine;
-        } elseif (! is_null($engine = $connection->getConfig('engine'))) {
-            return $sql.' engine = '.$engine;
+            return $sql . ' engine = ' . $blueprint->engine;
+        } elseif (!is_null($engine = $connection->getConfig('engine'))) {
+            return $sql . ' engine = ' . $engine;
         }
 
         return $sql;
@@ -571,7 +571,7 @@ class Grammar extends BaseGrammar
             $this->wrapTable($blueprint),
             $this->wrap($command->index),
             $type,
-            $command->algorithm ? ' using '.$command->algorithm : '',
+            $command->algorithm ? ' using ' . $command->algorithm : '',
             $this->columnize($command->columns)
         );
     }
@@ -907,7 +907,7 @@ class Grammar extends BaseGrammar
      */
     protected function modifyVirtualAs(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->virtualAs)) {
+        if (!is_null($column->virtualAs)) {
             return " as ({$column->virtualAs})";
         }
     }
@@ -919,7 +919,7 @@ class Grammar extends BaseGrammar
      */
     protected function modifyStoredAs(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->storedAs)) {
+        if (!is_null($column->storedAs)) {
             return " as ({$column->storedAs}) stored";
         }
     }
@@ -944,8 +944,8 @@ class Grammar extends BaseGrammar
      */
     protected function modifyCharset(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->charset)) {
-            return ' encoding = '.$column->charset;
+        if (!is_null($column->charset)) {
+            return ' encoding = ' . $column->charset;
         }
     }
 
@@ -956,7 +956,7 @@ class Grammar extends BaseGrammar
      */
     protected function modifyCollate(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->collation)) {
+        if (!is_null($column->collation)) {
             return " collate '{$column->collation}'";
         }
     }
@@ -984,8 +984,8 @@ class Grammar extends BaseGrammar
      */
     protected function modifyDefault(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->default)) {
-            return ' default '.$this->getDefaultValue($column->default, $column->type);
+        if (!is_null($column->default)) {
+            return ' default ' . $this->getDefaultValue($column->default, $column->type);
         }
     }
 
@@ -1008,7 +1008,7 @@ class Grammar extends BaseGrammar
      */
     protected function modifyFirst(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->first)) {
+        if (!is_null($column->first)) {
             return ' first';
         }
     }
@@ -1020,8 +1020,8 @@ class Grammar extends BaseGrammar
      */
     protected function modifyAfter(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->after)) {
-            return ' after '.$this->wrap($column->after);
+        if (!is_null($column->after)) {
+            return ' after ' . $this->wrap($column->after);
         }
     }
 
@@ -1032,8 +1032,8 @@ class Grammar extends BaseGrammar
      */
     protected function modifyComment(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->comment)) {
-            return " comment '".addslashes($column->comment)."'";
+        if (!is_null($column->comment)) {
+            return " comment '" . addslashes($column->comment) . "'";
         }
     }
 
@@ -1044,8 +1044,8 @@ class Grammar extends BaseGrammar
      */
     protected function modifySrid(Blueprint $blueprint, Fluent $column)
     {
-        if (! is_null($column->srid) && is_int($column->srid) && $column->srid > 0) {
-            return ' srid '.$column->srid;
+        if (!is_null($column->srid) && is_int($column->srid) && $column->srid > 0) {
+            return ' srid ' . $column->srid;
         }
     }
 
@@ -1086,7 +1086,7 @@ class Grammar extends BaseGrammar
         foreach ($columns as $i => $column) {
             // on adding columns to the table
             if (!$isChanging) {
-                if (! str_contains($column, ' not null') && str_contains($column, ' null')) {
+                if (!str_contains($column, ' not null') && str_contains($column, ' null')) {
                     $column = str_replace(' null', '', $column);
                 }
             }
@@ -1096,12 +1096,12 @@ class Grammar extends BaseGrammar
                 if (str_contains($column, ' not null')) {
                     // query: "column" set not null
                     preg_match('/(\".+\"\s)/', $column, $match);
-                    $columns[] = $match[0].'set not null';
+                    $columns[] = $match[0] . 'set not null';
                     $column = str_replace(' not null', '', $column);
                 } elseif (str_contains($column, ' null')) {
                     // query: "column" drop not null
                     preg_match('/(\".+\"\s)/', $column, $match);
-                    $columns[] = $match[0].'drop not null';
+                    $columns[] = $match[0] . 'drop not null';
                     $column = str_replace(' null', '', $column);
                 }
 
@@ -1131,7 +1131,7 @@ class Grammar extends BaseGrammar
             // Each of the column types have their own compiler functions which are tasked
             // with turning the column definition into its SQL format for this platform
             // used by the connection. The column's modifiers are compiled and added.
-            $sql = str_replace("'", '"', $this->wrap($column)).' '.$this->getType($column);
+            $sql = str_replace("'", '"', $this->wrap($column)) . ' ' . $this->getType($column);
 
             $parsedColumns[] = $this->addModifiers($sql, $blueprint, $column);
         }
@@ -1160,6 +1160,6 @@ class Grammar extends BaseGrammar
             return (int) $value;
         }
 
-        return "'".(string) $value."'";
+        return "'" . (string) $value . "'";
     }
 }
