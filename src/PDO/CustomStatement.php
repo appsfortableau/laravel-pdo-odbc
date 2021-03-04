@@ -21,6 +21,7 @@ class CustomStatement extends PDOStatement
 
     public function bindValue($parameter, $value, $type = null)
     {
+        $type = $value === null ? PDO::PARAM_NULL : $type;
         $this->bindings[$parameter] = [$value, $type];
 
         return $this;
