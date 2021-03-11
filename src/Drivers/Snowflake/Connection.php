@@ -2,8 +2,14 @@
 
 namespace LaravelPdoOdbc\Drivers\Snowflake;
 
+use PDO;
+use PDOStatement;
 use function count;
+use function is_bool;
 use function is_null;
+use DateTimeInterface;
+use function is_float;
+use function is_string;
 use LaravelPdoOdbc\ODBCConnection;
 use LaravelPdoOdbc\Processors\SnowflakeProcessor as Processor;
 use LaravelPdoOdbc\Grammars\Query\SnowflakeGrammar as QueryGrammer;
@@ -85,37 +91,21 @@ class Connection extends ODBCConnection
     }
 
     /**
-     * Get the default post processor instance.
-     *
-     * @return ODBCProcessor
-     */
-    protected function getDefaultPostProcessor()
-    {
-        $processor = $this->getConfig('options.processor');
-
-        if ($processor) {
-            return new $processor();
-        }
-
-        return new Processor();
-    }
-
-    /**
      * Bind values to their parameters in the given statement.
      *
-     * @param  \PDOStatement  $statement
-     * @param  array  $bindings
+     * @param PDOStatement $statement
+     * @param array        $bindings
+     *
      * @return void
      */
     public function bindValues($statement, $bindings)
     {
         foreach ($bindings as $key => $value) {
-
-            $type = \PDO::PARAM_STR;
+            $type = PDO::PARAM_STR;
             if (is_bool($value)) {
                 $value = $value ? 'TRUE' : 'FALSE';
             } elseif (is_numeric($value)) {
-                $type = \PDO::PARAM_INT;
+                $type = PDO::PARAM_INT;
             }
 
             $statement->bindValue(
@@ -129,7 +119,6 @@ class Connection extends ODBCConnection
     /**
      * Prepare the query bindings for execution.
      *
-     * @param  array  $bindings
      * @return array
      */
     public function prepareBindings(array $bindings)
@@ -140,7 +129,7 @@ class Connection extends ODBCConnection
             // We need to transform all instances of DateTimeInterface into the actual
             // date string. Each query grammar maintains its own date string format
             // so we'll just ask the grammar for the format to get from the date.
-            if ($value instanceof \DateTimeInterface) {
+            if ($value instanceof DateTimeInterface) {
                 $bindings[$key] = $value->format($grammar->getDateFormat());
             } elseif (is_bool($value)) {
                 $bindings[$key] = (bool) $value;
@@ -152,5 +141,21 @@ class Connection extends ODBCConnection
         }
 
         return $bindings;
+    }
+
+    /**
+     * Get the default post processor instance.
+     *
+     * @return ODBCProcessor
+     */
+    protected function getDefaultPostProcessor()
+    {
+        $processor = $this->getConfig('options.processor');
+
+        if ($processor) {
+            return new $processor();
+        }
+
+        return new Processor();
     }
 }

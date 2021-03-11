@@ -37,7 +37,6 @@ class SchemaBuilder extends BaseBuilder
             [$this->connection->getDatabaseName(), $table]
         );
 
-
         return $this->connection->getPostProcessor()->processColumnListing($results);
     }
 
