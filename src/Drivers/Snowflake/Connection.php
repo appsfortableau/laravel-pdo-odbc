@@ -4,7 +4,6 @@ namespace LaravelPdoOdbc\Drivers\Snowflake;
 
 use PDO;
 use PDOStatement;
-use function count;
 use function is_bool;
 use function is_null;
 use DateTimeInterface;
@@ -66,19 +65,24 @@ class Connection extends ODBCConnection
                 return true;
             }
 
+            // dd($this->getPdo());
             // only use the prepare if there are bindings
-            if (0 === count($bindings)) {
-                $affected = $this->getPdo()->query($query);
+            // if (0 === count($bindings)) {
+            //     $statement = $this->getPdo()->prepare($query);
+            //     // //
+            //     dd($statement->execute());
 
-                if (false === (bool) $affected) {
-                    $err = $affected->errorInfo();
-                    if ('00000' === $err[0] || '01000' === $err[0]) {
-                        return true;
-                    }
-                }
+            //     $affected = $this->getPdo()->query($query);
 
-                return (bool) $affected;
-            }
+            //     if (false === (bool) $affected) {
+            //         $err = $affected->errorInfo();
+            //         if ('00000' === $err[0] || '01000' === $err[0]) {
+            //             return true;
+            //         }
+            //     }
+
+            //     return (bool) $affected;
+            // }
 
             $statement = $this->getPdo()->prepare($query);
 
@@ -87,6 +91,35 @@ class Connection extends ODBCConnection
             $this->recordsHaveBeenModified();
 
             return $statement->execute();
+        });
+    }
+
+    /**
+     * Run a select statement against the database.
+     *
+     * @param string $query
+     * @param array  $bindings
+     * @param bool   $useReadPdo
+     *
+     * @return array
+     */
+    public function select($query, $bindings = [], $useReadPdo = true)
+    {
+        return $this->run($query, $bindings, function ($query, $bindings) use ($useReadPdo) {
+            if ($this->pretending()) {
+                return [];
+            }
+
+            // For select statements, we'll simply execute the query and return an array
+            // of the database result set. Each element in the array will be a single
+            // row from the database table, and will either be an array or objects.
+            $statement = $this->getPdoForSelect($useReadPdo)->prepare($query);
+
+            $this->bindValues($statement, $this->prepareBindings($bindings));
+
+            $statement->execute();
+
+            return $statement->fetchAll();
         });
     }
 

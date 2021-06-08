@@ -139,6 +139,16 @@ class SnowflakeGrammar extends Grammar
     }
 
     /**
+     * Compile an insert statement into SQL.
+     *
+     * @return string
+     */
+    public function compileInsert(Builder $query, array $values)
+    {
+        return parent::compileInsert($query, $values);
+    }
+
+    /**
      * Compile the lock into SQL.
      *
      * @param bool|string $value
@@ -321,17 +331,5 @@ class SnowflakeGrammar extends Grammar
         [$field, $path] = $this->wrapJsonFieldAndPath($value);
 
         return 'get_path('.$field.', "'.$path.'")';
-    }
-
-    /**
-     * Compile an insert statement into SQL.
-     *
-     * @param  \Illuminate\Database\Query\Builder  $query
-     * @param  array  $values
-     * @return string
-     */
-    public function compileInsert(Builder $query, array $values)
-    {
-        return parent::compileInsert($query, $values);
     }
 }

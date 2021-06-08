@@ -3,6 +3,10 @@
 namespace LaravelPdoOdbc\Concerns\Grammars;
 
 use function count;
+use Illuminate\Support\Str;
+use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Schema\ColumnDefinition;
 
 /**
  * This code is shared between the Query and Schema grammar.
@@ -21,6 +25,41 @@ trait Snowflake
     public function columnize(array $columns)
     {
         return implode(', ', array_map([$this, 'wrapColumn'], $columns));
+    }
+
+    /**
+     * Wrap a table in keyword identifiers.
+     *
+     * @param \Illuminate\Database\Query\Expression|string $table
+     *
+     * @return string
+     */
+    public function wrapTable($table)
+    {
+        if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
+            if ($table instanceof Blueprint) {
+                $table = $table->getTable();
+            }
+            $table = Str::upper($table);
+        }
+
+        if (method_exists($this, 'isExpression') && ! $this->isExpression($table)) {
+            return $this->wrap($this->tablePrefix.$table, true);
+        }
+
+        return $this->getValue($table);
+    }
+
+    /**
+     * Get the value of a raw expression.
+     *
+     * @param \Illuminate\Database\Query\Expression $expression
+     *
+     * @return string
+     */
+    public function getValue($expression)
+    {
+        return $expression instanceof Expression ? $expression->getValue() : $expression;
     }
 
     /**
@@ -49,7 +88,15 @@ trait Snowflake
      */
     protected function wrapColumn($column)
     {
+        if ($column instanceof ColumnDefinition) {
+            $column = $column->get('name');
+        }
+
         if ('*' !== $column) {
+            if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
+                return str_replace('"', '', Str::upper($column));
+            }
+
             return '"'.str_replace('"', '""', $column).'"';
         }
 

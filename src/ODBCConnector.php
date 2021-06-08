@@ -2,6 +2,7 @@
 
 namespace LaravelPdoOdbc;
 
+use PDO;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use LaravelPdoOdbc\Contracts\OdbcDriver;
@@ -13,7 +14,7 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
     /**
      * Establish a database connection.
      *
-     * @return \PDO
+     * @return PDO
      *
      * @internal param array $options
      */
@@ -34,7 +35,7 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
 
     public static function registerDriver()
     {
-        return function ($config, $name) {
+        return function ($config) {
             $config['database'] = $config['database'] ?? null;
 
             $pdoConnection = (new self())->connect($config);

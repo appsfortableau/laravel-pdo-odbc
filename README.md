@@ -8,6 +8,18 @@ This package does not use the `odbc_*` functions, but the `PDO` class to make th
 
 > `composer require yoramdelangen/laravel-pdo-odbc` To add source in your project
 
+## # Configuration
+
+**Snowflake specific configuration**
+There is some customization allowed with the Snowflake driver:
+```
+# when `false` it automaticly uppercases the column names
+SNOWFLAKEP_COLUMNS_CASE_SENSITIVE=false
+
+# When `true` it wraps the columns in double qoutes and makes them upper/lower case based on the input.
+SNOWFLAKEP_COLUMNS_CASE_SENSITIVE=true
+```
+
 ## # Usage Instructions
 
 It's very simple to configure:

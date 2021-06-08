@@ -16,7 +16,7 @@ class Snowflake extends ODBCConnector implements OdbcDriver
 {
     public static function registerDriver()
     {
-        return function ($config, $name) {
+        return function ($config) {
             $config['database'] = $config['database'] ?? null;
 
             $pdo = (new self())->connect($config);

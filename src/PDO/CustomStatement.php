@@ -4,8 +4,24 @@ namespace LaravelPdoOdbc\PDO;
 
 use PDO;
 use PDOStatement;
+use function strlen;
+use function is_float;
 use function func_get_args;
+use function function_exists;
+use const FILTER_VALIDATE_BOOLEAN;
 use function call_user_func_array;
+
+if (! function_exists('str_replace_first')) {
+    function str_replace_first($search, $replace, $subject)
+    {
+        $pos = strpos($subject, $search);
+        if (false !== $pos) {
+            return substr_replace($subject, $replace, $pos, strlen($search));
+        }
+
+        return $subject;
+    }
+}
 
 class CustomStatement extends PDOStatement
 {
@@ -21,7 +37,7 @@ class CustomStatement extends PDOStatement
 
     public function bindValue($parameter, $value, $type = null)
     {
-        $type = $value === null ? PDO::PARAM_NULL : $type;
+        $type = null === $value ? PDO::PARAM_NULL : $type;
         $this->bindings[$parameter] = [$value, $type];
 
         return $this;
@@ -40,7 +56,7 @@ class CustomStatement extends PDOStatement
             return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
         }
 
-        return call_user_func_array(['parent', __FUNCTION__], func_get_args());
+        return call_user_func_array([$this, __FUNCTION__], func_get_args());
     }
 
     public function execute($bound_input_params = null)
@@ -84,25 +100,25 @@ class CustomStatement extends PDOStatement
             return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
         }
 
-        return call_user_func_array(['parent', __FUNCTION__], func_get_args());
+        return call_user_func_array([$this, __FUNCTION__], func_get_args());
     }
 
-    public function fetchAll($how = PDO::FETCH_OBJ, $class_name = null, $ctor_args = null)
+    public function fetchAll($how = PDO::FETCH_BOTH, $class_name = null, $ctor_args = null)
     {
         if ($this->exec) {
             return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
         }
 
-        return call_user_func_array(['parent', __FUNCTION__], func_get_args());
+        return call_user_func_array([$this, __FUNCTION__], func_get_args());
     }
 
     public function fetchColumn($column_number = 0)
     {
         if ($this->exec) {
-            return call_user_func_array([$this->exec, __FUNCTION__], $args);
+            return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
         }
 
-        return call_user_func_array(['parent', __FUNCTION__], $args);
+        return call_user_func_array([$this, __FUNCTION__], func_get_args());
     }
 
     public function fetchObject($class_name = null, $ctor_args = null)
@@ -111,7 +127,7 @@ class CustomStatement extends PDOStatement
             return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
         }
 
-        return call_user_func_array(['parent', __FUNCTION__], func_get_args());
+        return call_user_func_array([$this, __FUNCTION__], func_get_args());
     }
 
     protected function replaceBindings(string &$query, array $bindings = []): string
