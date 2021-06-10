@@ -2,11 +2,25 @@
 
 namespace LaravelPdoOdbc\Flavours\Snowflake;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Query\Processors\Processor as BaseProcessor;
 
 class Processor extends BaseProcessor
 {
+    public static function wrapTable($tableName): string
+    {
+        if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
+            if ($tableName instanceof Blueprint) {
+                $tableName = $tableName->getTable();
+            }
+            $tableName = Str::upper($tableName);
+        }
+
+        return $tableName;
+    }
+
     /**
      * Process the results of a column listing query.
      *

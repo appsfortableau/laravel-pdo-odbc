@@ -48,60 +48,6 @@ class Connection extends ODBCConnection
     }
 
     /**
-     * Execute an SQL statement and return the boolean result.
-     *
-     * @param string $query
-     * @param array  $bindings
-     *
-     * @return bool
-     */
-    public function statement($query, $bindings = [])
-    {
-        return $this->run($query, $bindings, function ($query, $bindings) {
-            if ($this->pretending()) {
-                return true;
-            }
-
-            $statement = $this->getPdo()->prepare($query);
-
-            $this->bindValues($statement, $this->prepareBindings($bindings));
-
-            $this->recordsHaveBeenModified();
-
-            return $statement->execute();
-        });
-    }
-
-    /**
-     * Run a select statement against the database.
-     *
-     * @param string $query
-     * @param array  $bindings
-     * @param bool   $useReadPdo
-     *
-     * @return array
-     */
-    public function select($query, $bindings = [], $useReadPdo = true)
-    {
-        return $this->run($query, $bindings, function ($query, $bindings) use ($useReadPdo) {
-            if ($this->pretending()) {
-                return [];
-            }
-
-            // For select statements, we'll simply execute the query and return an array
-            // of the database result set. Each element in the array will be a single
-            // row from the database table, and will either be an array or objects.
-            $statement = $this->getPdoForSelect($useReadPdo)->prepare($query);
-
-            $this->bindValues($statement, $this->prepareBindings($bindings));
-
-            $statement->execute();
-
-            return $statement->fetchAll();
-        });
-    }
-
-    /**
      * Bind values to their parameters in the given statement.
      *
      * @param PDOStatement $statement

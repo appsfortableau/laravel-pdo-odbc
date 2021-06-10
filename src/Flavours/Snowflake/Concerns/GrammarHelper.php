@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\ColumnDefinition;
+use LaravelPdoOdbc\Flavours\Snowflake\Processor;
 
 /**
  * This code is shared between the Query and Schema grammar.
@@ -36,12 +37,7 @@ trait GrammarHelper
      */
     public function wrapTable($table)
     {
-        if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
-            if ($table instanceof Blueprint) {
-                $table = $table->getTable();
-            }
-            $table = Str::upper($table);
-        }
+        $table = Processor::wrapTable($table);
 
         if (method_exists($this, 'isExpression') && ! $this->isExpression($table)) {
             return $this->wrap($this->tablePrefix.$table, true);

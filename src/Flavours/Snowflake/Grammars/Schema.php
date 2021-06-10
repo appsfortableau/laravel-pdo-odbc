@@ -1137,13 +1137,16 @@ class Schema extends BaseGrammar
                 if (str_contains($column, ' not null')) {
                     // query: "column" set not null
                     preg_match('/(\".+\"\s)/', $column, $match);
-                    dump($column, $match);
-                    $columns[] = $match[0].'set not null';
+                    if (count($match) === 0) {
+                        $match = explode(' ', $column);
+                    }
+
+                    $columns[] = trim($match[0]).' set not null';
                     $column = str_replace(' not null', '', $column);
                 } elseif (str_contains($column, ' null')) {
                     // query: "column" drop not null
                     preg_match('/(\".+\"\s)/', $column, $match);
-                    $columns[] = $match[0].'drop not null';
+                    $columns[] = trim($match[0]).' drop not null';
                     $column = str_replace(' null', '', $column);
                 }
 

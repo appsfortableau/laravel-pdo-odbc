@@ -28,10 +28,10 @@ There is some customization allowed with the Snowflake driver:
 
 ```
 # when `false` it automaticly uppercases the column names
-SNOWFLAKEP_COLUMNS_CASE_SENSITIVE=false
+SNOWFLAKE_COLUMNS_CASE_SENSITIVE=false
 
 # When `true` it wraps the columns in double qoutes and makes them upper/lower case based on the input.
-SNOWFLAKEP_COLUMNS_CASE_SENSITIVE=true
+SNOWFLAKE_COLUMNS_CASE_SENSITIVE=true
 ```
 
 Currently we have the following driver flavours:
