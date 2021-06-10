@@ -1,6 +1,6 @@
 <?php
 
-namespace LaravelPdoOdbc\PDO;
+namespace LaravelPdoOdbc\Flavours\Snowflake\PDO;
 
 use PDO;
 use PDOStatement;
@@ -23,7 +23,7 @@ if (! function_exists('str_replace_first')) {
     }
 }
 
-class CustomStatement extends PDOStatement
+class Statement extends PDOStatement
 {
     protected $pdo = null;
     protected $exec = null;

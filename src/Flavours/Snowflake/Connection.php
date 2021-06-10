@@ -1,6 +1,6 @@
 <?php
 
-namespace LaravelPdoOdbc\Drivers\Snowflake;
+namespace LaravelPdoOdbc\Flavours\Snowflake;
 
 use PDO;
 use PDOStatement;
@@ -10,9 +10,6 @@ use DateTimeInterface;
 use function is_float;
 use function is_string;
 use LaravelPdoOdbc\ODBCConnection;
-use LaravelPdoOdbc\Processors\SnowflakeProcessor as Processor;
-use LaravelPdoOdbc\Grammars\Query\SnowflakeGrammar as QueryGrammer;
-use LaravelPdoOdbc\Grammars\Schema\Snowflake\Grammar as SchemaGrammer;
 
 class Connection extends ODBCConnection
 {
@@ -25,7 +22,7 @@ class Connection extends ODBCConnection
             $this->useDefaultSchemaGrammar();
         }
 
-        return new SchemaBuilder($this);
+        return new Builders\Schema($this);
     }
 
     public function getDefaultQueryGrammar()
@@ -36,7 +33,7 @@ class Connection extends ODBCConnection
             return new $queryGrammar();
         }
 
-        return new QueryGrammer();
+        return new Grammars\Query();
     }
 
     public function getDefaultSchemaGrammar()
@@ -47,7 +44,7 @@ class Connection extends ODBCConnection
             return new $schemaGrammar();
         }
 
-        return new SchemaGrammer();
+        return new Grammars\Schema();
     }
 
     /**
@@ -64,25 +61,6 @@ class Connection extends ODBCConnection
             if ($this->pretending()) {
                 return true;
             }
-
-            // dd($this->getPdo());
-            // only use the prepare if there are bindings
-            // if (0 === count($bindings)) {
-            //     $statement = $this->getPdo()->prepare($query);
-            //     // //
-            //     dd($statement->execute());
-
-            //     $affected = $this->getPdo()->query($query);
-
-            //     if (false === (bool) $affected) {
-            //         $err = $affected->errorInfo();
-            //         if ('00000' === $err[0] || '01000' === $err[0]) {
-            //             return true;
-            //         }
-            //     }
-
-            //     return (bool) $affected;
-            // }
 
             $statement = $this->getPdo()->prepare($query);
 

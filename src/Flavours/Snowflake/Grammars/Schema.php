@@ -1,18 +1,19 @@
 <?php
 
-namespace LaravelPdoOdbc\Grammars\Schema\Snowflake;
+namespace LaravelPdoOdbc\Flavours\Snowflake\Grammars;
 
 use function is_int;
-use function is_null;
 use RuntimeException;
+use function is_null;
 use function in_array;
 use function is_float;
 use Illuminate\Support\Fluent;
 use const FILTER_VALIDATE_BOOLEAN;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
+use LaravelPdoOdbc\Flavours\Snowflake\Grammars\ChangeColumn;
+use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
 use Illuminate\Database\Schema\Grammars\Grammar as BaseGrammar;
-use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
 
 /**
  * More documentation on Snowflake columns:
@@ -23,9 +24,9 @@ use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
  * Rules for altering can be found here:
  *     https://docs.snowflake.com/en/sql-reference/sql/alter-table-column.html
  */
-class Grammar extends BaseGrammar
+class Schema extends BaseGrammar
 {
-    use SnowflakeConcern;
+    use GrammarHelper;
 
     /**
      * The possible column modifiers.

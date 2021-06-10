@@ -18,7 +18,7 @@ class ODBCServiceProvider extends ServiceProvider
         $this->app->resolving('db', function ($db) {
             /* @var DatabaseManager $db */
             $db->extend('odbc', ODBCConnector::registerDriver());
-            $db->extend('snowflake', Drivers\Snowflake::registerDriver());
+            $db->extend('snowflake', Flavours\Snowflake\Connector::registerDriver());
         });
     }
 

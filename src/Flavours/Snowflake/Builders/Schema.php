@@ -1,16 +1,16 @@
 <?php
 
-namespace LaravelPdoOdbc\Drivers\Snowflake;
+namespace LaravelPdoOdbc\Flavours\Snowflake\Builders;
 
-use function count;
 use LogicException;
+use function count;
 use function in_array;
 use Illuminate\Database\Schema\Builder as BaseBuilder;
-use LaravelPdoOdbc\Concerns\Grammars\Snowflake as SnowflakeConcern;
+use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
 
-class SchemaBuilder extends BaseBuilder
+class Schema extends BaseBuilder
 {
-    use SnowflakeConcern;
+    use GrammarHelper;
 
     /**
      * Determine if the given table exists.

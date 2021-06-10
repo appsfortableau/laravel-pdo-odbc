@@ -22,10 +22,13 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
     {
         $options = $this->getOptions($config);
 
-        $dsn = Arr::get($config, 'dsn');
-
-        if (! Str::contains('odbc:', $dsn)) {
-            $dsn = 'odbc:'.$dsn;
+        // FULL DSN ONLY
+        if ($dsn = Arr::get($config, 'dsn')) {
+            $dsn = ! Str::contains('odbc:', $dsn) ? 'odbc:'.$dsn : $dsn;
+        }
+        // dynamicly build in some way..
+        else {
+            $dsn = $this->buildDsnDynamicly($config);
         }
 
         $connection = $this->createConnection($dsn, $config, $options);
@@ -43,5 +46,20 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
 
             return $connection;
         };
+    }
+
+    protected function buildDsnDynamicly(array $config): string
+    {
+        // ignore some default props...
+        $ignoreProps = ['driver', 'odbc_driver', 'dsn', 'options', 'username', 'password'];
+        $props = Arr::except($config, $ignoreProps);
+        $props = ['driver' => Arr::get($config, 'odbc_driver')] + $props;
+
+        // join pieces together
+        $props = array_map(function ($val, $key) {
+            return /*';'.*/ucfirst($key).'='.$val;
+        }, $props, array_keys($props));
+
+        return 'odbc:'.implode(';', $props);
     }
 }

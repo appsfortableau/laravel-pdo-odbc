@@ -1,6 +1,6 @@
 <?php
 
-namespace LaravelPdoOdbc\Concerns\Grammars;
+namespace LaravelPdoOdbc\Flavours\Snowflake\Concerns;
 
 use function count;
 use Illuminate\Support\Str;
@@ -15,7 +15,7 @@ use Illuminate\Database\Schema\ColumnDefinition;
  * Values: are wrapped within single qoutes.
  * Columns and Table names: are wrapped within double qoutes.
  */
-trait Snowflake
+trait GrammarHelper
 {
     /**
      * Convert an array of column names into a delimited string.

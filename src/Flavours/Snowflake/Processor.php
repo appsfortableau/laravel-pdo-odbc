@@ -1,11 +1,11 @@
 <?php
 
-namespace LaravelPdoOdbc\Processors;
+namespace LaravelPdoOdbc\Flavours\Snowflake;
 
 use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Query\Processors\Processor;
+use Illuminate\Database\Query\Processors\Processor as BaseProcessor;
 
-class SnowflakeProcessor extends Processor
+class Processor extends BaseProcessor
 {
     /**
      * Process the results of a column listing query.

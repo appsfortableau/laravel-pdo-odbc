@@ -1,18 +1,17 @@
 <?php
 
-namespace LaravelPdoOdbc\Drivers;
+namespace LaravelPdoOdbc\Flavours\Snowflake;
 
 use PDO;
 use LaravelPdoOdbc\ODBCConnector;
-use LaravelPdoOdbc\PDO\CustomStatement;
 use LaravelPdoOdbc\Contracts\OdbcDriver;
-use LaravelPdoOdbc\Drivers\Snowflake\Connection as SnowflakeConnection;
+use LaravelPdoOdbc\Flavours\Snowflake\PDO\Statement;
 
 /**
  * Snowflake Connector
  * Inspiration: https://github.com/jenssegers/laravel-mongodb.
  */
-class Snowflake extends ODBCConnector implements OdbcDriver
+class Connector extends ODBCConnector implements OdbcDriver
 {
     public static function registerDriver()
     {
@@ -20,8 +19,12 @@ class Snowflake extends ODBCConnector implements OdbcDriver
             $config['database'] = $config['database'] ?? null;
 
             $pdo = (new self())->connect($config);
-            $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, [CustomStatement::class, [$pdo]]);
-            $connection = new SnowflakeConnection($pdo, $config['database'], isset($config['prefix']) ? $config['prefix'] : '', $config);
+
+            // custom Statement class to resolve Streaming value and parameters.
+            $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, [Statement::class, [$pdo]]);
+
+            // create connection
+            $connection = new Connection($pdo, $config['database'], $config['prefix'] ?? '', $config);
 
             // set default fetch mode for PDO
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, $connection->getFetchMode());
