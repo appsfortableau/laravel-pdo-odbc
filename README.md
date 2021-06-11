@@ -1,6 +1,6 @@
 # ODBC integration for Laravel Framework
 
-This intergrates almost natively with Laravel Eloquent. Its a fork from `abram/laravel-odbc` to make it standalone next the `illuminate/database` without Laravel. But it will run with Laravel.
+This intergrates almost natively with Laravel Eloquent. Goal is to create a uniform ODBC package for Laravel, but it can run standalone as well. It is a fork of the `abram/laravel-odbc` repository. 
 
 This package does not use the `odbc_*` functions, but the `PDO` class to make the intergration with eloquent much easier and more flawless.
 
