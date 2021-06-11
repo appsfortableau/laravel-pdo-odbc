@@ -11,10 +11,11 @@ class Processor extends BaseProcessor
 {
     public static function wrapTable($tableName): string
     {
+        if ($tableName instanceof Blueprint) {
+            $tableName = $tableName->getTable();
+        }
+
         if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
-            if ($tableName instanceof Blueprint) {
-                $tableName = $tableName->getTable();
-            }
             $tableName = Str::upper($tableName);
         }
 
