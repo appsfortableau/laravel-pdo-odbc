@@ -1,4 +1,4 @@
-# ODBC integration for Laravel Framework
+# ODBC/Snowflake integration for Laravel Framework
 
 This intergrates almost natively with Laravel Eloquent. Goal is to create a uniform ODBC package for Laravel, but it can run standalone as well. It is a fork of the `abram/laravel-odbc` repository. 
 
