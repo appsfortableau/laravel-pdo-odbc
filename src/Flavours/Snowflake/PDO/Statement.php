@@ -4,24 +4,10 @@ namespace LaravelPdoOdbc\Flavours\Snowflake\PDO;
 
 use PDO;
 use PDOStatement;
-use function strlen;
 use function is_float;
 use function func_get_args;
-use function function_exists;
-use const FILTER_VALIDATE_BOOLEAN;
 use function call_user_func_array;
-
-if (! function_exists('str_replace_first')) {
-    function str_replace_first($search, $replace, $subject)
-    {
-        $pos = strpos($subject, $search);
-        if (false !== $pos) {
-            return substr_replace($subject, $replace, $pos, strlen($search));
-        }
-
-        return $subject;
-    }
-}
+use const FILTER_VALIDATE_BOOLEAN;
 
 class Statement extends PDOStatement
 {
@@ -59,10 +45,9 @@ class Statement extends PDOStatement
         return call_user_func_array([$this, __FUNCTION__], func_get_args());
     }
 
-    public function execute($bound_input_params = null)
+    protected function _prepareValues(): array
     {
-        $query = $this->queryString;
-
+        $bindings = [];
         foreach ($this->bindings as $key => $param) {
             list($val, $type) = $param;
 
@@ -76,16 +61,29 @@ class Statement extends PDOStatement
             } elseif (PDO::PARAM_NULL === $type) {
                 $val = 'null';
             } else {
-                $val = "'".$val."'";
+                $val = "'".addslashes($val)."'";
             }
 
-            if (is_numeric($key)) {
-                $query = str_replace_first('?', $val, $query);
+            $bindings[$key] = $val;
+        }
+        return $bindings;
+    }
 
-                continue;
+    public function execute($bound_input_params = null)
+    {
+        $query = explode('?', $this->queryString);
+
+        if (count($query) > 1) {
+            $bindings = $this->_prepareValues();
+
+            $buildQuery = '';
+            for($i=0; $i < count($query); ++$i) {
+              $val = $bindings[$i] ?? '';
+              $buildQuery .= ($val) . $query[$i];
             }
-
-            $query = str_replace($key, $val, $query);
+            $query = $buildQuery;
+        } else {
+          $query = reset($query);
         }
 
         // reset PDO Statement for "parent"
@@ -128,10 +126,5 @@ class Statement extends PDOStatement
         }
 
         return call_user_func_array([$this, __FUNCTION__], func_get_args());
-    }
-
-    protected function replaceBindings(string &$query, array $bindings = []): string
-    {
-        return $query;
     }
 }
