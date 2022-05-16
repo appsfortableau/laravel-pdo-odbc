@@ -23,10 +23,21 @@ class Connector extends ODBCConnector implements OdbcDriver
      */
     public function connect(array $config)
     {
+        $connection = null;
+        $usingSnowflakeDriver = $config['driver'] === 'snowflake' && extension_loaded('pdo_snowflake');
+
+        // the PDO Snowflake driver was installed and the driver was snowflake, start using snowflake driver.
+        if ($usingSnowflakeDriver) {
+            $this->dsnPrefix = 'snowflake';
+            $this->dsnIncludeDriver = false;
+        }
+
         $connection = parent::connect($config);
 
-        // custom Statement class to resolve Streaming value and parameters.
-        $connection->setAttribute(PDO::ATTR_STATEMENT_CLASS, [Statement::class, [$connection]]);
+        if (!$usingSnowflakeDriver) {
+            // custom Statement class to resolve Streaming value and parameters.
+            $connection->setAttribute(PDO::ATTR_STATEMENT_CLASS, [Statement::class, [$connection]]);
+        }
 
         return $connection;
     }

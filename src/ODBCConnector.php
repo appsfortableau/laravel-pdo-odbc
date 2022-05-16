@@ -13,6 +13,17 @@ use Illuminate\Database\Connectors\ConnectorInterface;
 class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
 {
     /**
+     * Set dynamically the DSN prefix in case we need it.
+     */
+    protected string $dsnPrefix = 'odbc';
+
+    /**
+     * Include the "Driver=" property in the DSN.
+     * In case of Snowflake connection via snowflake_pdo driver we dont want it.
+     */
+    protected bool $dsnIncludeDriver = true;
+
+    /**
      * Establish a database connection.
      *
      * @return PDO
@@ -25,16 +36,14 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
 
         // FULL DSN ONLY
         if ($dsn = Arr::get($config, 'dsn')) {
-            $dsn = ! Str::contains('odbc:', $dsn) ? 'odbc:'.$dsn : $dsn;
+            $dsn = ! Str::contains($this->dsnPrefix.':', $dsn) ? $this->dsnPrefix.':'.$dsn : $dsn;
         }
         // dynamicly build in some way..
         else {
             $dsn = $this->buildDsnDynamicly($config);
         }
 
-        $connection = $this->createConnection($dsn, $config, $options);
-
-        return $connection;
+        return $this->createConnection($dsn, $config, $options);
     }
 
     /**
@@ -46,22 +55,29 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
             $connection = (new self())->connect($config);
             $connection = new ODBCConnection($connection, $database, $prefix, $config);
 
+
             return $connection;
         };
     }
 
+    /**
+    * When dynamically building it takes the database configuration key and put it in the DSN.
+    */
     protected function buildDsnDynamicly(array $config): string
     {
         // ignore some default props...
         $ignoreProps = ['driver', 'odbc_driver', 'dsn', 'options', 'username', 'password'];
         $props = Arr::except($config, $ignoreProps);
-        $props = ['driver' => Arr::get($config, 'odbc_driver')] + $props;
 
-        // join pieces together
+        if ($this->dsnIncludeDriver) {
+            $props = ['driver' => Arr::get($config, 'odbc_driver')] + $props;
+        }
+
+        // join pieces DSN together
         $props = array_map(function ($val, $key) {
-            return /*';'.*/ucfirst($key).'='.$val;
+            return $key.'='.$val;
         }, $props, array_keys($props));
 
-        return 'odbc:'.implode(';', $props);
+        return $this->dsnPrefix.':'.implode(';', $props);
     }
 }
