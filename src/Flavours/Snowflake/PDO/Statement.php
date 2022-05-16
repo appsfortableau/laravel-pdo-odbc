@@ -47,7 +47,13 @@ class Statement extends PDOStatement
 
     protected function _prepareValues(): array
     {
-        $bindings = [];
+        $query = $this->queryString;
+
+        // Workaround for ODBC be broken for non-binded queries.
+        if (count($this->bindings) === 0) {
+            return parent::execute($bound_input_params);
+        }
+
         foreach ($this->bindings as $key => $param) {
             list($val, $type) = $param;
 
