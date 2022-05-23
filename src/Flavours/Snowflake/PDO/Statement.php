@@ -71,19 +71,24 @@ class Statement extends PDOStatement
 
     public function execute($bound_input_params = null)
     {
+        // TODO: quick fix for broken ODBC connection..  please make sure odbc config -> NoExecuteInSqlPrepare=false
+        if (count($this->bindings) === 0) {
+            return true;
+        }
+
         $query = explode('?', $this->queryString);
 
         if (count($query) > 1) {
             $bindings = $this->_prepareValues();
 
             $buildQuery = '';
-            for($i=0; $i < count($query); ++$i) {
-              $val = $bindings[$i] ?? '';
-              $buildQuery .= ($val) . $query[$i];
+            for ($i=0; $i < count($query); ++$i) {
+                $val = $bindings[$i] ?? '';
+                $buildQuery .= ($val) . $query[$i];
             }
             $query = $buildQuery;
         } else {
-          $query = reset($query);
+            $query = reset($query);
         }
 
         // reset PDO Statement for "parent"
