@@ -169,6 +169,8 @@ To use another class instead default one you can update your connection in:
 
 ## # Troubleshoot
 
+> In case you having problems with certain queries executed twice [see ticket #8](https://github.com/yoramdelangen/laravel-pdo-odbc/issues/8).
+
 #### `504 Bad gateway` error
 
 This error can occure on Mac OS. Make sure you have the PHP extensions `odbc` and `PDO_ODBC` installed.
