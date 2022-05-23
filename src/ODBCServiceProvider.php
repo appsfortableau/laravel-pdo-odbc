@@ -5,7 +5,6 @@ namespace LaravelPdoOdbc;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Database\DatabaseManager;
 use LaravelPdoOdbc\Flavours\Snowflake\Connector as SnowflakeConnector;
 
 class ODBCServiceProvider extends ServiceProvider
@@ -19,6 +18,7 @@ class ODBCServiceProvider extends ServiceProvider
     {
         Connection::resolverFor('odbc', ODBCConnector::registerDriver());
         Connection::resolverFor('snowflake', SnowflakeConnector::registerDriver());
+        Connection::resolverFor('snowflake_native', SnowflakeConnector::registerDriver());
     }
 
     /**

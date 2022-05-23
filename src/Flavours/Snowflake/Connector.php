@@ -4,6 +4,7 @@ namespace LaravelPdoOdbc\Flavours\Snowflake;
 
 use PDO;
 use Closure;
+use Exception;
 use LaravelPdoOdbc\ODBCConnector;
 use LaravelPdoOdbc\Contracts\OdbcDriver;
 use LaravelPdoOdbc\Flavours\Snowflake\PDO\Statement;
@@ -24,12 +25,16 @@ class Connector extends ODBCConnector implements OdbcDriver
     public function connect(array $config)
     {
         $connection = null;
-        $usingSnowflakeDriver = $config['driver'] === 'snowflake' && extension_loaded('pdo_snowflake');
+        $usingSnowflakeDriver = $config['driver'] === 'snowflake_native';
 
         // the PDO Snowflake driver was installed and the driver was snowflake, start using snowflake driver.
         if ($usingSnowflakeDriver) {
             $this->dsnPrefix = 'snowflake';
             $this->dsnIncludeDriver = false;
+
+            if (!extension_loaded('pdo_snowflake')) {
+                throw new Exception('Native Snowflake driver pdo_snowflake was not enabled');
+            }
         }
 
         $connection = parent::connect($config);

@@ -116,11 +116,11 @@ Or final way and dynamicly:
 ]
 ```
 
-When using the PHP `Snowflake_pdo` extension the following options are required:
+When using the PHP `pdo_snowflake` extension the following options are required:
 
 ```php
 'snowflake_pdo' => [
-    'driver' => 'snowflake',
+    'driver' => 'snowflake_native',
     'account' => '{account_name}.eu-west-1',
     'username' => '{username}',
     'password' => '{password}',
