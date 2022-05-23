@@ -1,6 +1,6 @@
 # ODBC/Snowflake integration for Laravel Framework
 
-This intergrates almost natively with Laravel Eloquent. Goal is to create a uniform ODBC package for Laravel, but it can run standalone as well. It is a fork of the `abram/laravel-odbc` repository. 
+This intergrates almost natively with Laravel Eloquent. Goal is to create a uniform ODBC package for Laravel, but it can run standalone as well. It is a fork of the `abram/laravel-odbc` repository.
 
 This package does not use the `odbc_*` functions, but the `PDO` class to make the intergration with eloquent much easier and more flawless.
 
@@ -21,6 +21,10 @@ By default the package will be automaticly registered via the `package:discover`
 ];
 ```
 
+Whenever you want to use the `snowflake_pdo` PHP extension, follow [there installation guide](https://github.com/snowflakedb/pdo_snowflake/) on setting it up.
+
+> Added support for `snowflake_pdo` in version `1.2.0`, it will still work without the snowflake extension.
+
 ## # Configuration
 
 **Snowflake specific configuration**
@@ -37,7 +41,7 @@ SNOWFLAKE_COLUMNS_CASE_SENSITIVE=true
 Currently we have the following driver flavours:
 
 - odbc (generic)
-- snowflake
+- snowflake (via odbc and native via PHP extension).
 - ....
 
 ## # Important to know the quirks!
@@ -46,7 +50,7 @@ Certain connections can have specific configuration issues we need to resolve be
 
 #### Snowflake
 
-Currently there are 2 known issues/quirks for a Snowflake connection:
+Currently there are 2 known issues/quirks for a Snowflake ODBC connection. When using snowflake PHP extension there aren't any quirks known, yet:
 
 By default Snowflake ODBC executes `DDL` statements in preparation. Meaning when sending a `$stmt = $pdo->prepare('...');` to Snowflake it will automaticly execute. It's **REQUIRED** to disable this and Snowflake has a ODBC Driver configuration (NOT the DSN config) for it `NoExecuteInSQLPrepare=true`. This option is available since version `2.21.6`.
 
@@ -102,7 +106,7 @@ Or final way and dynamicly:
 'odbc-connection-name' => [
     'driver' => 'snowflake',
     'odbc_driver' => '/opt/snowflake/snowflakeodbc/lib/universal/libSnowflake.dylib',
-    // 'odbc_driver' => 'Snowflake Driver',
+    // 'odbc_driver' => 'Snowflake path Driver',
     'server' => 'host.example.com'
     // 'host' => 'hostname.example.com',
     'username' => 'username',
@@ -110,6 +114,25 @@ Or final way and dynamicly:
     'warehouse' => 'warehouse name',
     'schema' => 'PUBLIC', // majority odbc's is default
 ]
+```
+
+When using the PHP `Snowflake_pdo` extension the following options are required:
+
+```php
+'snowflake_pdo' => [
+    'driver' => 'snowflake',
+    'account' => '{account_name}.eu-west-1',
+    'username' => '{username}',
+    'password' => '{password}',
+    'database' => '{database}',
+    'warehouse' => '{warehouse}',
+    'schema' => 'PUBLIC', // change it if necessary.
+    'options' => [
+        // required for Snowflake usage
+        \pdo::odbc_attr_use_cursor_library => \pdo::odbc_sql_use_driver
+    ]
+],
+
 ```
 
 > All fields will be dynamicly added to the DSN connection string, except the following: `driver, odbc_driver, options, username, password` these will be filtered from the DSN (for now).
