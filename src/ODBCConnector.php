@@ -4,6 +4,7 @@ namespace LaravelPdoOdbc;
 
 use PDO;
 use Closure;
+use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use LaravelPdoOdbc\Contracts\OdbcDriver;
@@ -72,6 +73,11 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
 
         if ($this->dsnIncludeDriver) {
             $props = ['driver' => Arr::get($config, 'odbc_driver')] + $props;
+
+            // throw exception in case dynamically buildup is missing the odbc driver absolute path.
+            if (!Arr::get($config, 'odbc_driver')) {
+                throw new Exception('Please make sure the environment variable: "DB_ODBC_DRIVER" was set properly in the .env file. DB_ODBC_DRIVER should be the absolute path to the database driver file.');
+            }
         }
 
         // join pieces DSN together
