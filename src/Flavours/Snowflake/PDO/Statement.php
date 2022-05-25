@@ -77,8 +77,8 @@ class Statement extends PDOStatement
 
     public function execute($bound_input_params = null)
     {
-        // TODO: quick fix for broken ODBC connection..  please make sure odbc config -> NoExecuteInSqlPrepare=false
-        if (count($this->bindings) === 0) {
+        // TEMP: all adding constraints queries are failing, current workaround.
+        if (str_contains($this->queryString, 'add constraint')) {
             return true;
         }
 

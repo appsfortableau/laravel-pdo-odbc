@@ -66,8 +66,9 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
     protected function buildDsnDynamicly(array $config): string
     {
         // ignore some default props...
-        $ignoreProps = ['driver', 'odbc_driver', 'dsn', 'options', 'username', 'password'];
+        $ignoreProps = ['driver', 'odbc_driver', 'dsn', 'options', 'server', 'username', 'password'];
         $props = Arr::except($config, $ignoreProps);
+
 
         if ($this->dsnIncludeDriver) {
             $props = ['driver' => Arr::get($config, 'odbc_driver')] + $props;

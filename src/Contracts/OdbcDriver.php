@@ -3,7 +3,6 @@
 namespace LaravelPdoOdbc\Contracts;
 
 use Closure;
-use LaravelPdoOdbc\ODBCConnector;
 
 interface OdbcDriver
 {
