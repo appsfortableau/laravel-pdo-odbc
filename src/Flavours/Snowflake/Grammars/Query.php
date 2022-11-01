@@ -3,6 +3,7 @@
 namespace LaravelPdoOdbc\Flavours\Snowflake\Grammars;
 
 use function is_array;
+
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Database\Query\Builder;
@@ -146,6 +147,29 @@ class Query extends Grammar
     public function compileInsert(Builder $query, array $values)
     {
         return parent::compileInsert($query, $values);
+    }
+
+    /**
+     * Compile an aggregated select clause.
+     *
+     * @param array $aggregate
+     *
+     * @return string
+     */
+    protected function compileAggregate(Builder $query, $aggregate)
+    {
+        $column = $this->columnize($aggregate['columns']);
+
+        // If the query has a "distinct" constraint and we're not asking for all columns
+        // we need to prepend "distinct" onto the column name so that the query takes
+        // it into account when it performs the aggregating operations on the data.
+        if (is_array($query->distinct)) {
+            $column = 'distinct '.$this->columnize($query->distinct);
+        } elseif ($query->distinct && '*' !== $column) {
+            $column = 'distinct '.$column;
+        }
+
+        return 'select '.$aggregate['function'].'('.$column.') as "aggregate"';
     }
 
     /**

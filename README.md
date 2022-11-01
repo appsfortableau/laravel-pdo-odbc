@@ -8,6 +8,8 @@ Goal of the package is to provide a generic way of connecting with a ODBC connec
 
 ## # How to install
 
+Make sure you have PHP version 7.4+ installed.
+
 > `composer require yoramdelangen/laravel-pdo-odbc` To add source in your project.
 
 By default the package will be automaticly registered via the `package:discover` command.
