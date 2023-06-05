@@ -1,27 +1,19 @@
 {
   "name": "yoramdelangen/laravel-pdo-odbc",
-  "description": "PDO ODBC integration for Laravel 7 & 8 framework. Tested for Snowflake connections",
+  "description": "PDO ODBC/Snowflake integration for Laravel framework. Support ODBC and native PDO Snowflake.",
   "type": "library",
   "homepage": "https://github.com/yoramdelangen/laravel-odbc",
   "license": "MIT",
   "authors": [
     {
-      "name": "Andrea Abram",
-      "email": "andreossido@gmail.com",
-      "homepage": "https://github.com/andreossido",
-      "role": "Developer"
-    },
-    {
       "name": "Yoram de Langen",
-      "email": "yoramdelangen@gmail.com",
-      "homepage": "https://github.com/yoramdelangen",
+      "email": "yoram@appsfortableau.infotopics.com",
+      "homepage": "https://github.com/appsfortableau",
       "role": "Developer"
     }
   ],
   "require": {
-    "php": ">=7.3",
-    "ext-odbc": "*",
-    "ext-pdo_odbc": "*",
+    "php": ">=8.0",
     "illuminate/database": ">= 7.0",
     "illuminate/support": ">= 7.0"
   },

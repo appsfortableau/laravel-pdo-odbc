@@ -4,15 +4,16 @@ namespace LaravelPdoOdbc\Flavours\Snowflake\PDO;
 
 use PDO;
 use PDOStatement;
-use function is_float;
-use function func_get_args;
 use function call_user_func_array;
+use function func_get_args;
+use function is_float;
 use const FILTER_VALIDATE_BOOLEAN;
 
 if (PHP_VERSION_ID > 80000) {
     class Statement extends PDOStatement
     {
         protected $pdo = null;
+
         protected $exec = null;
 
         protected $bindings = [];
@@ -69,6 +70,7 @@ if (PHP_VERSION_ID > 80000) {
 
                 $bindings[$key] = $val;
             }
+
             return $bindings;
         }
 
@@ -85,9 +87,9 @@ if (PHP_VERSION_ID > 80000) {
                 $bindings = $this->_prepareValues();
 
                 $buildQuery = '';
-                for ($i=0; $i < count($query); ++$i) {
+                for ($i = 0; $i < count($query); $i++) {
                     $val = $bindings[$i] ?? '';
-                    $buildQuery .= ($val) . $query[$i];
+                    $buildQuery .= ($val).$query[$i];
                 }
                 $query = $buildQuery;
             } else {
@@ -100,7 +102,7 @@ if (PHP_VERSION_ID > 80000) {
             return $this->exec->execute($params);
         }
 
-        public function fetch($how = null, $orientation = null, $offset = null)
+        public function fetch($how = null, $orientation = null, $offset = null): mixed
         {
             if ($this->exec) {
                 return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
@@ -118,8 +120,9 @@ if (PHP_VERSION_ID > 80000) {
             return call_user_func_array([$this, __FUNCTION__], func_get_args());
         }
 
-        public function fetchColumn($column_number = 0)
+        public function fetchColumn($column_number = 0): mixed
         {
+            dump('fetchColumn');
             if ($this->exec) {
                 return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
             }
@@ -129,6 +132,7 @@ if (PHP_VERSION_ID > 80000) {
 
         public function fetchObject($class_name = null, $ctor_args = null): object|false
         {
+            dump('fetchObject');
             if ($this->exec) {
                 return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
             }
@@ -137,9 +141,11 @@ if (PHP_VERSION_ID > 80000) {
         }
     }
 } else {
+    // Everything before PHP 8.0; Statement implementation
     class Statement extends PDOStatement
     {
         protected $pdo = null;
+
         protected $exec = null;
 
         protected $bindings = [];
@@ -200,6 +206,7 @@ if (PHP_VERSION_ID > 80000) {
 
                 $bindings[$key] = $val;
             }
+
             return $bindings;
         }
 
@@ -216,9 +223,9 @@ if (PHP_VERSION_ID > 80000) {
                 $bindings = $this->_prepareValues();
 
                 $buildQuery = '';
-                for ($i=0; $i < count($query); ++$i) {
+                for ($i = 0; $i < count($query); $i++) {
                     $val = $bindings[$i] ?? '';
-                    $buildQuery .= ($val) . $query[$i];
+                    $buildQuery .= ($val).$query[$i];
                 }
                 $query = $buildQuery;
             } else {
