@@ -76,11 +76,6 @@ if (PHP_VERSION_ID > 80000) {
 
         public function execute(?array $params = null): bool
         {
-            // TODO: quick fix for broken ODBC connection..  please make sure odbc config -> NoExecuteInSqlPrepare=false
-            if (count($this->bindings) === 0) {
-                return true;
-            }
-
             $query = explode('?', $this->queryString);
 
             if (count($query) > 1) {
