@@ -2,18 +2,17 @@
 
 namespace LaravelPdoOdbc\Flavours\Snowflake\Grammars;
 
-use function is_int;
-use RuntimeException;
-use function is_null;
-use function in_array;
-use function is_float;
-use Illuminate\Support\Fluent;
-use const FILTER_VALIDATE_BOOLEAN;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Schema\Blueprint;
-use LaravelPdoOdbc\Flavours\Snowflake\Grammars\ChangeColumn;
-use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
 use Illuminate\Database\Schema\Grammars\Grammar as BaseGrammar;
+use Illuminate\Support\Fluent;
+use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
+use RuntimeException;
+use function in_array;
+use function is_float;
+use function is_int;
+use function is_null;
+use const FILTER_VALIDATE_BOOLEAN;
 
 /**
  * More documentation on Snowflake columns:
@@ -105,7 +104,7 @@ class Schema extends BaseGrammar
     /**
      * Compile a create table command.
      *
-     * @return array
+     * @return string
      */
     public function compileCreate(Blueprint $blueprint, Fluent $command, Connection $connection)
     {
@@ -127,27 +126,22 @@ class Schema extends BaseGrammar
         // Finally, we will append the engine configuration onto this SQL statement as
         // the final thing we do before returning this finished SQL. Once this gets
         // added the query will be ready to execute against the real connections.
-        return array_values(array_filter(array_merge([$this->compileCreateEngine(
+        return $this->compileCreateEngine(
             $sql,
             $connection,
             $blueprint
-        )], $this->compileAutoIncrementStartingValues($blueprint))));
+        );
     }
 
     /**
      * Compile an add column command.
      *
-     * @return array
+     * @return string
      */
     public function compileAdd(Blueprint $blueprint, Fluent $command)
     {
         $prefix = 'alter table '.$this->wrapTable($blueprint).' add column';
-        $columns = $this->prefixArray($prefix, $this->getColumns($blueprint));
-
-        return array_values(array_merge(
-            $columns,
-            $this->compileAutoIncrementStartingValues($blueprint)
-        ));
+        return $this->prefixArray($prefix, $this->getColumns($blueprint));
     }
 
     /**
@@ -162,20 +156,20 @@ class Schema extends BaseGrammar
 
         return array_values(array_merge(
             $columns,
-            $this->compileAutoIncrementStartingValues($blueprint)
+            $this->compileAutoIncrementStartingValues($blueprint, $command)
         ));
     }
 
     /**
      * Compile the auto incrementing column starting values.
      *
-     * @return array
+     * @return string
      */
-    public function compileAutoIncrementStartingValues(Blueprint $blueprint)
+    public function compileAutoIncrementStartingValues(Blueprint $blueprint, Fluent $command)
     {
-        return collect($blueprint->autoIncrementingStartingValues())->map(function ($value, $column) use ($blueprint) {
-            return 'alter table '.$this->wrapTable($blueprint->getTable()).' autoincrement start '.$value;
-        })->all();
+        if ($command->column->autoIncrement && $value = $command->column->get('startingValue', $command->column->get('from'))) {
+            return 'alter table '.$this->wrapTable($blueprint).' autoincrement start '.$value;
+        }
     }
 
     /**
