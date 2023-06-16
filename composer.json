@@ -1,5 +1,5 @@
 {
-  "name": "yoramdelangen/laravel-pdo-odbc",
+  "name": "appsfortableau/laravel-pdo-odbc",
   "description": "PDO ODBC/Snowflake integration for Laravel framework. Support ODBC and native PDO Snowflake.",
   "type": "library",
   "homepage": "https://github.com/yoramdelangen/laravel-odbc",
