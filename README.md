@@ -40,13 +40,28 @@ SNOWFLAKE_COLUMNS_CASE_SENSITIVE=false
 SNOWFLAKE_COLUMNS_CASE_SENSITIVE=true
 ```
 
+If setting `QUOTED_IDENTIFIERS_IGNORE_CASE` to `true` in the Snowflake account
+it will cause issues with the Snowflake Laravel package. Instead, you can follow
+the default behavior of Snowflake, which is to have `QUOTED_IDENTIFIERS_IGNORE_CASE`
+set to `false`.
+
+The Snowflake Laravel package will automatically handle the `QUOTED_IDENTIFIERS_IGNORE_CASE`
+setting based on Snowflake's default behavior. The drawback is the extra query..
+
+In case you want to disable the automatically handle by the package, add the
+following environment variable to your `.env`:
+
+```dotenv
+SNOWFLAKE_DISABLE_FORCE_QUOTED_IDENTIFIER=true
+```
+
 Currently we have the following driver flavours:
 
 - odbc (generic)
 - snowflake (via odbc and native via PHP extension).
 - ....
 
-## # Important to know the quirks!
+## # Important to know the quirks
 
 Certain connections can have specific configuration issues we need to resolve before it works properly.
 
