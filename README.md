@@ -1,139 +1,74 @@
-# ODBC/Snowflake integration for Laravel Framework
+# ODBC/Snowflake Integration for Laravel Framework
 
-This intergrates almost natively with Laravel Eloquent. Goal is to create a uniform ODBC package for Laravel, but it can run standalone as well. It is a fork of the `abram/laravel-odbc` repository.
+This repository provides seamless integration of ODBC/Snowflake with Laravel Eloquent.
+It aims to create a comprehensive ODBC package for Laravel, while also
+functioning as a standalone solution.
 
-This package does not use the `odbc_*` functions, but the `PDO` class to make the intergration with eloquent much easier and more flawless.
+Unlike the `odbc_*` functions, this package utilizes the `PDO` class,
+resulting in smoother and more convenient integration with Eloquent.
 
-Goal of the package is to provide a generic way of connecting with a ODBC connection. Sometime we need to have a custom grammar(s) and Schema(s) to support a ODBC connection, e.g. like Snowflake.
+The primary goal of this package is to offer a standardized approach to connect
+with an ODBC connection. It supports custom grammars and schemas to accommodate
+various ODBC connections, such as Snowflake.
 
-## # How to install
+## How to Install
 
-Make sure you have PHP version 7.4+ installed.
+Before proceeding, ensure that you have PHP version 8.x installed on your system.
 
-> `composer require yoramdelangen/laravel-pdo-odbc` To add source in your project.
+To add the package to your project, run the following command:
 
-By default the package will be automaticly registered via the `package:discover` command.
+```bash
+composer require yoramdelangen/laravel-pdo-odbc
+```
 
-**Manual register service provider in app.php file**
+By default, the package will be automatically registered through the
+`package:discover` command.
+
+Alternatively, you can manually register the service provider in the `app.php` file:
 
 ```php
 'providers' => [
-  ...
-  LaravelPdoOdbc\ODBCServiceProvider::class
+  // ...
+  LaravelPdoOdbc\ODBCServiceProvider::class,
 ];
 ```
 
-Whenever you want to use the `snowflake_pdo` PHP extension, follow [there installation guide](https://github.com/snowflakedb/pdo_snowflake/) on setting it up.
+If you intend to use the `snowflake_pdo` PHP extension, please follow the
+installation guide provided [here](https://github.com/snowflakedb/pdo_snowflake/)
+to set it up.
 
-> Added support for `snowflake_pdo` in version `1.2.0`, it will still work without the snowflake extension.
+Starting from version `1.2.0`, the package includes support for `snowflake_pdo`,
+but it will still function without the Snowflake extension (via ODBC).
 
-## # Configuration
+## Configuration
 
-**Snowflake specific configuration**
-There is some customization allowed with the Snowflake driver:
+The available driver flavors are:
 
-```
-# when `false` it automaticly uppercases the column names
+- ODBC (generic)
+- Snowflake (via ODBC and native through PHP extension)
+- ...
+
+### Snowflake Specific environment variables
+
+You have the option to customize the Snowflake driver using the following parameters:
+
+```ini
+# When set to `false`, column names are automatically uppercased.
 SNOWFLAKE_COLUMNS_CASE_SENSITIVE=false
 
-# When `true` it wraps the columns in double qoutes and makes them upper/lower case based on the input.
+# When set to `true`, column names are wrapped in double quotes and their
+# case is determined by the input.
 SNOWFLAKE_COLUMNS_CASE_SENSITIVE=true
 ```
 
-If setting `QUOTED_IDENTIFIERS_IGNORE_CASE` to `true` in the Snowflake account
-it will cause issues with the Snowflake Laravel package. Instead, you can follow
-the default behavior of Snowflake, which is to have `QUOTED_IDENTIFIERS_IGNORE_CASE`
-set to `false`.
+## Usage
 
-The Snowflake Laravel package will automatically handle the `QUOTED_IDENTIFIERS_IGNORE_CASE`
-setting based on Snowflake's default behavior. The drawback is the extra query..
+Configuring the package is straightforward:
 
-In case you want to disable the automatically handle by the package, add the
-following environment variable to your `.env`:
+**Add a Database Configuration to `database.php`**
 
-```dotenv
-SNOWFLAKE_DISABLE_FORCE_QUOTED_IDENTIFIER=true
-```
-
-Currently we have the following driver flavours:
-
-- odbc (generic)
-- snowflake (via odbc and native via PHP extension).
-- ....
-
-## # Important to know the quirks
-
-Certain connections can have specific configuration issues we need to resolve before it works properly.
-
-#### Snowflake
-
-Currently there are 2 known issues/quirks for a Snowflake ODBC connection. When using snowflake PHP extension there aren't any quirks known, yet:
-
-By default Snowflake ODBC executes `DDL` statements in preparation. Meaning when sending a `$stmt = $pdo->prepare('...');` to Snowflake it will automaticly execute. It's **REQUIRED** to disable this and Snowflake has a ODBC Driver configuration (NOT the DSN config) for it `NoExecuteInSQLPrepare=true`. This option is available since version `2.21.6`.
-
-Must be set in:
-
-- Window: [Non-unix environment](https://docs.snowflake.com/en/user-guide/odbc-parameters.html#setting-parameters-in-windows).
-- Unix: [`simba.snowflake.ini` file](https://docs.snowflake.com/en/user-guide/odbc-parameters.html#setting-parameters-in-macos-or-linux).
-
-Read more about it on the following:
-
-- [ODBC parameters](https://docs.snowflake.com/en/user-guide/odbc-parameters.html#configuration-parameters).
-- [Changelog June 2020](https://community.snowflake.com/s/article/client-release-history).
-- [More about DDL]
-
-> `DDL`: Data Definition Language, commands: ALTER, COMMENT, CREATE, DESCRIBE, DROP, SHOW, USE
-
-Snowflake also doesn't support streaming bind values. Mainly when using `->prepare('..')` statment and following by `$stmt->bindValue(...)` or `$stmt->bindParam()`. We added a CustomStatement class to resolve this issue.
-
-## # Usage Instructions
-
-It's very simple to configure:
-
-**Add database to database.php file**
-There are multiple ways to configure the ODBC connection:
-
-Simple via DSN only:
-
-```php
-'odbc-connection-name' => [
-    'driver' => 'odbc',
-    'dsn' => 'OdbcConnectionName', // odbc: will be prefixed
-    'username' => 'username',
-    'password' => 'password'
-]
-```
-
-or when you do not have a datasource configured within your ODBC Manager:
-
-```php
-'odbc-connection-name' => [
-    'driver' => 'odbc',
-    'dsn' => 'Driver={Your Snowflake Driver};Server=snowflake.example.com;Port=443;Database={DatabaseName}',
-    'username' => 'username',
-    'password' => 'password'
-]
-```
-
-> Note: DSN `Driver` can be a absolute path to your driver file or the name registered within `odbcinst.ini` file/ODBC manager.
-
-Or final way and dynamicly:
-
-```php
-'odbc-connection-name' => [
-    'driver' => 'snowflake',
-    'odbc_driver' => '/opt/snowflake/snowflakeodbc/lib/universal/libSnowflake.dylib',
-    // 'odbc_driver' => 'Snowflake path Driver',
-    'server' => 'host.example.com'
-    // 'host' => 'hostname.example.com',
-    'username' => 'username',
-    'password' => 'password',
-    'warehouse' => 'warehouse name',
-    'schema' => 'PUBLIC', // majority odbc's is default
-]
-```
-
-When using the PHP `pdo_snowflake` extension the following options are required:
+Starting from version 1.2, we recommend using the native Snowflake extension
+instead of ODBC, but we'll keep supporting it.
 
 ```php
 'snowflake_pdo' => [
@@ -145,90 +80,86 @@ When using the PHP `pdo_snowflake` extension the following options are required:
     'warehouse' => '{warehouse}',
     'schema' => 'PUBLIC', // change it if necessary.
     'options' => [
-        // required for Snowflake usage
-        \pdo::odbc_attr_use_cursor_library => \pdo::odbc_sql_use_driver
+        // Required for Snowflake usage
+        \PDO::ODBC_ATTR_USE_CURSOR_LIBRARY => \PDO::ODBC_SQL_USE_DRIVER
     ]
 ],
-
 ```
 
-> All fields will be dynamicly added to the DSN connection string, except the following: `driver, odbc_driver, options, username, password` these will be filtered from the DSN (for now).
+You have multiple ways to configure the ODBC connection:
 
-> Note: DSN `odbc_driver` can be a absolute path to your driver file or the name registered within `odbcinst.ini` file/ODBC manager.
+1. Simple configuration using DSN only:
 
-## # Eloquen ORM
+   ```php
+   'odbc-connection-name' => [
+       'driver' => 'odbc',
+       'dsn' => 'OdbcConnectionName', // odbc: will be prefixed
+       'username' => 'username',
+       'password' => 'password'
+   ]
+   ```
 
-You can use Laravel, Eloquent ORM and other Illuminate's components as usual.
+   or, if you don't have a datasource configured within your ODBC Manager:
 
-```PHP
+   ```php
+   'odbc-connection-name' => [
+       'driver' => 'odbc',
+       'dsn' => 'Driver={Your Snowflake Driver};Server=snowflake.example.com;Port=443;Database={DatabaseName}',
+       'username' => 'username',
+       'password' => 'password'
+   ]
+   ```
+
+   > Note: The DSN `Driver` parameter can either be an absolute path to your
+   > driver file or the name registered within the `odbcinst.ini` file/ODBC manager.
+
+2. Dynamic configuration:
+
+   ```php
+   'odbc-connection-name' => [
+       'driver' => 'snowflake',
+       // please change this path accordingly your exact location
+       'odbc_driver' => '/opt/snowflake/snowflakeodbc/lib/universal/libSnowflake.dylib',
+       // 'odbc_driver' => 'Snowflake path Driver',
+       'server' => 'host.example.com',
+       'username' => 'username',
+       'password' => 'password',
+       'warehouse' => 'warehouse name',
+       'schema' => 'PUBLIC', // most ODBC connections use the default value
+   ]
+   ```
+
+   > All fields, except for `driver`, `odbc_driver`, `options`, `username`, and
+   > `password`, will be dynamically added to the DSN connection string.
+   >
+   > Note: The DSN `odbc_driver` parameter can either be an absolute path to
+   > your driver file or the name registered within the `odbcinst.ini`
+   > file/ODBC manager.
+
+## Eloquent ORM
+
+You can use Laravel, Eloquent ORM, and other Illuminate components as usual.
+
+```php
 # Facade
-$books = DB::connection('odbc-connection-name')->table('books')->where('Author', 'Abram Andrea')->get();
+$books = DB::connection('odbc-connection-name')
+            ->table('books')
+            ->where('Author', 'Abram Andrea')
+            ->get();
 
 # ORM
 $books = Book::where('Author', 'Abram Andrea')->get();
 ```
 
-## # Custom getLastInsertId() function
+## Troubleshooting and more info
 
-If you want to provide a custom <b>getLastInsertId()</b> function, you can extends _ODBCProcessor_ class and override function.<br>
+We have documented all weird behavious we encountered with the ODBC driver for
+Snowflake. In case of trouble of weird messages, checkout the following links:
 
-```PHP
-class CustomProcessor extends ODBCProcessor
-{
-    /**
-     * @param Builder $query
-     * @param null $sequence
-     * @return mixed
-     */
-    public function getLastInsertId(Builder $query, $sequence = null)
-    {
-        return $query->getConnection()->table($query->from)->latest('id')->first()->getAttribute($sequence);
-    }
-}
-```
+- [Snowflake ODBC](docs/snowflake-odbc.md)
+- [Snowflake ODBC Troubleshooting](docs/snowflake-odbc-troubleshooting.md)
 
-## # Custom Processor / QueryGrammar / SchemaGrammar
+## Customization
 
-To use another class instead default one you can update your connection in:
-
-```PHP
-'odbc-connection-name' => [
-    'driver' => 'odbc',
-    'dsn' => 'OdbcConnectionName',
-    'username' => 'username',
-    'password' => 'password',
-    'options' => [
-        'processor' => Illuminate\Database\Query\Processors\Processor::class,   //default
-        'grammar' => [
-            'query' => Illuminate\Database\Query\Grammars\Grammar::class,       //default
-            'schema' => Illuminate\Database\Schema\Grammars\Grammar::class      //default
-        ]
-    ]
-]
-```
-
-## # Troubleshoot
-
-> In case you having problems with certain queries executed twice [see ticket #8](https://github.com/yoramdelangen/laravel-pdo-odbc/issues/8).
-
-#### `504 Bad gateway` error
-
-This error can occure on Mac OS. Make sure you have the PHP extensions `odbc` and `PDO_ODBC` installed.
-If you got the error `internal error, unexpected SHLIBEXT value` you should change the used cursor library:
-
-```PHP
-'odbc-connection-name' => [
-    'driver' => 'odbc',
-    'dsn' => 'Driver={Your Snowflake Driver};Server=snowflake.example.com', // odbc: will be prefixed
-    // ....
-    'options' => [
-      \PDO::ODBC_ATTR_USE_CURSOR_LIBRARY => \PDO::ODBC_SQL_USE_DRIVER
-      // or
-      // 1000 => 2
-    ]
-]
-// \PDO::ODBC_ATTR_USE_CURSOR_LIBRARY equals 1000
-// \PDO::ODBC_SQL_USE_DRIVER equals 2
-```
-
-> Check other options [here](https://www.php.net/manual/en/ref.pdo-odbc.php)
+- [Custom `getLastInsertId()` Function](docs/custom-last-insert-id.md)
+- [Custom Processor/QueryGrammar/SchemaGrammar](docs/custom-grammers.md)

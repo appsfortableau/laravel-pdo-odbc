@@ -2,14 +2,14 @@
 
 namespace LaravelPdoOdbc;
 
-use PDO;
 use Closure;
 use Exception;
+use Illuminate\Database\Connectors\Connector;
+use Illuminate\Database\Connectors\ConnectorInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use LaravelPdoOdbc\Contracts\OdbcDriver;
-use Illuminate\Database\Connectors\Connector;
-use Illuminate\Database\Connectors\ConnectorInterface;
+use PDO;
 
 class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
 {
@@ -56,26 +56,26 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
             $connection = (new self())->connect($config);
             $connection = new ODBCConnection($connection, $database, $prefix, $config);
 
-
             return $connection;
         };
     }
 
     /**
-    * When dynamically building it takes the database configuration key and put it in the DSN.
-    */
+     * When dynamically building it takes the database configuration key and put it in the DSN.
+     */
     protected function buildDsnDynamicly(array $config): string
     {
         // ignore some default props...
-        $ignoreProps = ['driver', 'odbc_driver', 'dsn', 'options', 'server', 'username', 'password'];
+        $ignoreProps = $this->dsnPrefix === 'snowflake' ?
+            ['driver', 'odbc_driver', 'dsn', 'options', 'port', 'server', 'username', 'password', 'name', 'prefix'] :
+            ['driver', 'odbc_driver', 'dsn', 'options', 'username', 'password', 'name', 'prefix'];
         $props = Arr::except($config, $ignoreProps);
-
 
         if ($this->dsnIncludeDriver) {
             $props = ['driver' => Arr::get($config, 'odbc_driver')] + $props;
 
             // throw exception in case dynamically buildup is missing the odbc driver absolute path.
-            if (!Arr::get($config, 'odbc_driver')) {
+            if (! Arr::get($config, 'odbc_driver')) {
                 throw new Exception('Please make sure the environment variable: "DB_ODBC_DRIVER" was set properly in the .env file. DB_ODBC_DRIVER should be the absolute path to the database driver file.');
             }
         }
