@@ -5,7 +5,6 @@ namespace LaravelPdoOdbc\Flavours\Snowflake;
 use Closure;
 use Exception;
 use LaravelPdoOdbc\Contracts\OdbcDriver;
-use LaravelPdoOdbc\Flavours\Snowflake\PDO\Statement;
 use LaravelPdoOdbc\ODBCConnector;
 use PDO;
 
@@ -32,7 +31,7 @@ class Connector extends ODBCConnector implements OdbcDriver
             $this->dsnPrefix = 'snowflake';
             $this->dsnIncludeDriver = false;
 
-            if (! extension_loaded('pdo_snowflake')) {
+            if (!extension_loaded('pdo_snowflake')) {
                 throw new Exception('Native Snowflake driver pdo_snowflake was not enabled');
             }
         }
@@ -41,7 +40,11 @@ class Connector extends ODBCConnector implements OdbcDriver
 
         if ($usingSnowflakeDriver === false) {
             // custom Statement class to resolve Streaming value and parameters.
-            $connection->setAttribute(PDO::ATTR_STATEMENT_CLASS, [Statement::class, [$connection]]);
+            if (PHP_VERSION_ID > 80000) {
+                $connection->setAttribute(PDO::ATTR_STATEMENT_CLASS, [\LaravelPdoOdbc\Flavours\Snowflake\PDO\Statement80::class, [$connection]]);
+            } else {
+                $connection->setAttribute(PDO::ATTR_STATEMENT_CLASS, [\LaravelPdoOdbc\Flavours\Snowflake\PDO\Statement74::class, [$connection]]);
+            }
         }
 
         return $connection;
