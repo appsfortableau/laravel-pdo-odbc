@@ -54,7 +54,7 @@ class Processor extends BaseProcessor
         $idColumn = $sequence ?: 'id';
         $wrappedTable = $query->getGrammar()->wrapTable($query->from);
 
-        $result = $connection->selectOne('select max('. $idColumn .') as '. $idColumn .' from '.$wrappedTable);
+        $result = $connection->selectOne(sprintf('select max("%s") as "%s" from %s', $idColumn, $idColumn, $wrappedTable));
 
         $id = $result->$idColumn;
 
