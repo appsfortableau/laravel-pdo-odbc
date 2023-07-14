@@ -51,11 +51,12 @@ class Processor extends BaseProcessor
 
         $connection->insert($sql, $values);
 
+        $idColumn = $sequence ?: 'id';
         $wrappedTable = $query->getGrammar()->wrapTable($query->from);
 
-        $result = $connection->selectOne('select * from '.$wrappedTable.' at(statement=>last_query_id())');
-        // hacky.... TODO we should fix this proper way...
-        $id = array_values((array) $result)[0];
+        $result = $connection->selectOne('select max('. $idColumn .') as '. $idColumn .' from '.$wrappedTable);
+
+        $id = $result->$idColumn;
 
         return is_numeric($id) ? (int) $id : $id;
     }
