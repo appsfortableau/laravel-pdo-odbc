@@ -107,7 +107,7 @@ class Statement80 extends PDOStatement
         return call_user_func_array([$this, __FUNCTION__], func_get_args());
     }
 
-    public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
+    public function fetchAll($how = PDO::FETCH_BOTH, $class_name = null,mixed ...$ctor_args):array
     {
         if ($this->exec) {
             return call_user_func_array([$this->exec, __FUNCTION__], func_get_args());
