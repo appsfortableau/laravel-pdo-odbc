@@ -9,7 +9,7 @@ use Illuminate\Database\Query\Processors\Processor as BaseProcessor;
 
 class Processor extends BaseProcessor
 {
-    public static function wrapTable($tableName): string
+    public static function wrapTable($tableName)
     {
         if ($tableName instanceof Blueprint) {
             $tableName = $tableName->getTable();
