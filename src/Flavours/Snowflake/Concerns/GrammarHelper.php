@@ -94,11 +94,7 @@ trait GrammarHelper
         }
 
         if ('*' !== $column) {
-            if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
-                return str_replace('"', '', Str::upper($column));
-            }
-
-            return '"'.str_replace('"', '""', $column).'"';
+            return str_replace('"', '', $column);
         }
 
         return $column;
