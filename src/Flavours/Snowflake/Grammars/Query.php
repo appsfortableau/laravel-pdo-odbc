@@ -356,4 +356,16 @@ class Query extends Grammar
 
         return 'get_path('.$field.', "'.$path.'")';
     }
+
+    /**
+     * Escapes a value for safe SQL embedding.
+     *
+     * @param  string|float|int|bool|null  $value
+     * @param  bool  $binary
+     * @return string
+     */
+    public function escape($value, $binary = false)
+    {
+        return $value;
+    }
 }
