@@ -37,10 +37,9 @@ trait GrammarHelper
      */
     public function wrapTable($table)
     {
-        $table = Processor::wrapTable($table);
-
-        if (method_exists($this, 'isExpression') && ! $this->isExpression($table)) {
-            return $this->wrap($this->tablePrefix.$table, true);
+        if (method_exists($this, 'isExpression') && !$this->isExpression($table)) {
+            $table = Processor::wrapTable($table);
+            return $this->wrap($this->tablePrefix . $table, true);
         }
 
         return $this->getValue($table);
@@ -101,7 +100,7 @@ trait GrammarHelper
     }
 
     /**
-     * Wrap a single string in keyword identifiers.
+     * Wrap a single string in keypublic function wrapTable($table)word identifiers.
      *
      * @param string $value
      *
