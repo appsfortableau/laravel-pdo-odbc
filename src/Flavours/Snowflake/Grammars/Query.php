@@ -6,6 +6,7 @@ use function is_array;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar;
 use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
@@ -366,6 +367,6 @@ class Query extends Grammar
      */
     public function escape($value, $binary = false)
     {
-        return $value;
+        return DB::connection()->getPdo()->quote($value);
     }
 }
