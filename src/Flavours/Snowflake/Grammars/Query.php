@@ -6,6 +6,7 @@ use function is_array;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar;
 use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
@@ -355,5 +356,17 @@ class Query extends Grammar
         [$field, $path] = $this->wrapJsonFieldAndPath($value);
 
         return 'get_path('.$field.', "'.$path.'")';
+    }
+
+    /**
+     * Escapes a value for safe SQL embedding.
+     *
+     * @param  string|float|int|bool|null  $value
+     * @param  bool  $binary
+     * @return string
+     */
+    public function escape($value, $binary = false)
+    {
+        return DB::connection()->getPdo()->quote($value);
     }
 }
