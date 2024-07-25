@@ -195,7 +195,7 @@ class Schema extends BaseBuilder
      *
      * @return string
      */
-    public function getColumnType($table, $column)
+    public function getColumnType($table, $column, $fullDefinition = false)
     {
         $table = $this->connection->getTablePrefix().$table;
 
