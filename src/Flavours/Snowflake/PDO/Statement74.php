@@ -4,9 +4,11 @@ namespace LaravelPdoOdbc\Flavours\Snowflake\PDO;
 
 use PDO;
 use PDOStatement;
+
 use function call_user_func_array;
 use function func_get_args;
 use function is_float;
+
 use const FILTER_VALIDATE_BOOLEAN;
 
 // Everything before PHP 8.0; Statement implementation
@@ -60,7 +62,7 @@ class Statement74 extends PDOStatement
             // cast type
             if (is_float($val)) {
                 $val = (float) $val;
-            } elseif (PDO::PARAM_INT === $type || is_numeric($val)) {
+            } elseif (PDO::PARAM_INT === $type) {
                 $val = (int) $val;
             } elseif (PDO::PARAM_BOOL === $type) {
                 $val = (bool) filter_var($val, FILTER_VALIDATE_BOOLEAN);
