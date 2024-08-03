@@ -54,6 +54,9 @@ class ODBCConnector extends Connector implements ConnectorInterface, OdbcDriver
     {
         return function ($connection, $database, $prefix, $config) {
             $connection = (new self())->connect($config);
+            if ($flavour = Arr::get($config, 'options.flavour')) {
+                $connection->setAttribute(PDO::ATTR_STATEMENT_CLASS, [$flavour, [$connection]]);
+            }
             $connection = new ODBCConnection($connection, $database, $prefix, $config);
 
             return $connection;
