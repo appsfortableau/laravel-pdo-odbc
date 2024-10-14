@@ -59,7 +59,7 @@ class Statement80 extends PDOStatement
             // cast type
             if (is_float($val)) {
                 $val = (float) $val;
-            } elseif (PDO::PARAM_INT === $type || is_numeric($val)) {
+            } elseif (PDO::PARAM_INT === $type) {
                 $val = (int) $val;
             } elseif (PDO::PARAM_BOOL === $type) {
                 $val = (bool) filter_var($val, FILTER_VALIDATE_BOOLEAN);
