@@ -1,14 +1,14 @@
 {
-  "name": "appsfortableau/laravel-pdo-odbc",
+  "name": "nzscripps/laravel-pdo-odbc",
   "description": "PDO ODBC/Snowflake integration for Laravel framework. Support ODBC and native PDO Snowflake.",
   "type": "library",
-  "homepage": "https://github.com/appsfortableau/laravel-odbc",
+  "homepage": "https://github.com/nzscripps/laravel-odbc",
   "license": "MIT",
   "authors": [
     {
       "name": "Yoram de Langen",
       "email": "yoram@appsfortableau.infotopics.com",
-      "homepage": "https://github.com/appsfortableau",
+      "homepage": "https://github.com/nzscripps",
       "role": "Developer"
     }
   ],
