@@ -37,10 +37,9 @@ trait GrammarHelper
      */
     public function wrapTable($table)
     {
-        $table = Processor::wrapTable($table);
-
-        if (method_exists($this, 'isExpression') && ! $this->isExpression($table)) {
-            return $this->wrap($this->tablePrefix.$table, true);
+        if (method_exists($this, 'isExpression') && !$this->isExpression($table)) {
+            $table = Processor::wrapTable($table);
+            return $this->wrap($this->tablePrefix . $table, true);
         }
 
         return $this->getValue($table);
@@ -55,7 +54,7 @@ trait GrammarHelper
      */
     public function getValue($expression)
     {
-        return $expression instanceof Expression ? $expression->getValue() : $expression;
+        return $expression instanceof Expression ? $expression->getValue($this) : $expression;
     }
 
     /**
@@ -78,22 +77,20 @@ trait GrammarHelper
     /**
      * Wrap a single string in keyword identifiers.
      *
-     * @param string $value
-     *
+     * @param $column
      * @return string
      */
     protected function wrapColumn($column)
     {
+        if (method_exists($this, 'isExpression') && $this->isExpression($column)) {
+            return $this->getValue($column);
+        }
         if ($column instanceof ColumnDefinition) {
             $column = $column->get('name');
         }
 
         if ('*' !== $column) {
-            if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
-                return str_replace('"', '', Str::upper($column));
-            }
-
-            return '"'.str_replace('"', '""', $column).'"';
+            return str_replace('"', '', $column);
         }
 
         return $column;
@@ -109,7 +106,7 @@ trait GrammarHelper
     protected function wrapValue($value)
     {
         if ('*' !== $value) {
-            return "'".str_replace("'", "''", $value)."'";
+            return "'" . str_replace("'", "''", $value) . "'";
         }
 
         return $value;
