@@ -1,6 +1,8 @@
 # ODBC/Snowflake Integration for Laravel Framework
 
-☕ Enjoying this project? [Buy us a coffee or support development](https://buy.stripe.com/5kAdTS2Xm45p2IM9AA) to help us keep building!
+Enjoying this project?
+
+[![Buy us a coffee](https://img.shields.io/badge/☕-Buy%20us%20a%20coffee-orange)](https://buy.stripe.com/5kAdTS2Xm45p2IM9AA)
 
 This repository provides seamless integration of ODBC/Snowflake with Laravel Eloquent.
 It aims to create a comprehensive ODBC package for Laravel, while also
