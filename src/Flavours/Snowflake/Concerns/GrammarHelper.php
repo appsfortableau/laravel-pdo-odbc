@@ -35,11 +35,12 @@ trait GrammarHelper
      *
      * @return string
      */
-    public function wrapTable($table)
+    public function wrapTable($table, $prefix = null)
     {
         if (method_exists($this, 'isExpression') && !$this->isExpression($table)) {
+            $prefix ??= $this->tablePrefix;
             $table = Processor::wrapTable($table);
-            return $this->wrap($this->tablePrefix . $table, true);
+            return $this->wrap($prefix . $table, true);
         }
 
         return $this->getValue($table);
