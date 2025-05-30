@@ -30,10 +30,10 @@ class Connection extends ODBCConnection
         $queryGrammar = $this->getConfig('options.grammar.query');
 
         if ($queryGrammar) {
-            return new $queryGrammar();
+            return new $queryGrammar($this);
         }
 
-        return new Grammars\Query();
+        return new Grammars\Query($this);
     }
 
     public function getDefaultSchemaGrammar()
@@ -41,10 +41,10 @@ class Connection extends ODBCConnection
         $schemaGrammar = $this->getConfig('options.grammar.schema');
 
         if ($schemaGrammar) {
-            return new $schemaGrammar();
+            return new $schemaGrammar($this);
         }
 
-        return new Grammars\Schema();
+        return new Grammars\Schema($this);
     }
 
     /**
