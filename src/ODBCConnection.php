@@ -12,7 +12,7 @@ class ODBCConnection extends Connection
         $queryGrammar = $this->getConfig('options.grammar.query');
 
         if ($queryGrammar) {
-            return new $queryGrammar();
+            return new $queryGrammar($this);
         }
 
         return parent::getDefaultQueryGrammar();
@@ -23,7 +23,7 @@ class ODBCConnection extends Connection
         $schemaGrammar = $this->getConfig('options.grammar.schema');
 
         if ($schemaGrammar) {
-            return new $schemaGrammar();
+            return new $schemaGrammar($this);
         }
 
         return parent::getDefaultSchemaGrammar();
