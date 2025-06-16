@@ -8,10 +8,12 @@ use Illuminate\Database\Schema\Grammars\Grammar as BaseGrammar;
 use Illuminate\Support\Fluent;
 use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
 use RuntimeException;
+
 use function in_array;
 use function is_float;
 use function is_int;
 use function is_null;
+
 use const FILTER_VALIDATE_BOOLEAN;
 
 /**
@@ -49,9 +51,13 @@ class Schema extends BaseGrammar
      *
      * @return string
      */
-    public function compileTableExists()
+    public function compileTableExists($schema, $table)
     {
-        return "select * from information_schema.tables where table_catalog = ? and table_name = ? and table_type = 'BASE TABLE'";
+        return sprintf(
+            "select * from information_schema.tables where table_catalog = '%s' and table_name = '%s' and table_type = 'BASE TABLE'",
+            $this->wrapTable($table),
+            $this->wrapTable($schema)
+        );
     }
 
     /**
@@ -61,7 +67,10 @@ class Schema extends BaseGrammar
      */
     public function compileTableDetails(string $table)
     {
-        return 'select * from information_schema.tables where table_name = \''.$table.'\' order by ordinal_position';
+        return sprintf(
+            "select * from information_schema.tables where table_name = '%s' order by ordinal_position'",
+            $this->wrapTable($table)
+        );
     }
 
     /**
@@ -85,33 +94,15 @@ class Schema extends BaseGrammar
     }
 
     /**
-     * Compile a rename column command.
-     *
-     * Snowflake documentation found here: https://docs.snowflake.com/en/sql-reference/sql/alter-table.html
-     *
-     * @return array
-     */
-    public function compileRenameColumn(Blueprint $blueprint, Fluent $command, Connection $connection)
-    {
-        return sprintf(
-            'alter table %s rename column %s to %s',
-            $this->wrapTable($blueprint),
-            $this->wrap($command->from),
-            $this->wrap($command->to)
-        );
-    }
-
-    /**
      * Compile a create table command.
      *
      * @return string
      */
-    public function compileCreate(Blueprint $blueprint, Fluent $command, Connection $connection)
+    public function compileCreate(Blueprint $blueprint, Fluent $command)
     {
         $sql = $this->compileCreateTable(
             $blueprint,
-            $command,
-            $connection
+            $command
         );
 
         // Once we have the primary SQL, we can add the encoding option to the SQL for
@@ -119,7 +110,6 @@ class Schema extends BaseGrammar
         // the table. If so, we will add the engine declaration to the SQL query.
         $sql = $this->compileCreateEncoding(
             $sql,
-            $connection,
             $blueprint
         );
 
@@ -128,7 +118,6 @@ class Schema extends BaseGrammar
         // added the query will be ready to execute against the real connections.
         return $this->compileCreateEngine(
             $sql,
-            $connection,
             $blueprint
         );
     }
@@ -258,11 +247,10 @@ class Schema extends BaseGrammar
      * Compile a create database command.
      *
      * @param string                          $name
-     * @param \Illuminate\Database\Connection $connection
      *
      * @return string
      */
-    public function compileCreateDatabase($name, $connection)
+    public function compileCreateDatabase($name)
     {
         return sprintf(
             'create database %s',
@@ -516,9 +504,9 @@ class Schema extends BaseGrammar
      *
      * @return array
      */
-    public function compileChange(Blueprint $blueprint, Fluent $command, Connection $connection)
+    public function compileChange(Blueprint $blueprint, Fluent $command)
     {
-        return ChangeColumn::compile($this, $blueprint, $command, $connection);
+        return ChangeColumn::compile($this, $blueprint, $command);
     }
 
     /**
@@ -526,11 +514,10 @@ class Schema extends BaseGrammar
      *
      * @param \Illuminate\Database\Schema\Blueprint $blueprint
      * @param \Illuminate\Support\Fluent            $command
-     * @param \Illuminate\Database\Connection       $connection
      *
      * @return array
      */
-    protected function compileCreateTable($blueprint, $command, $connection)
+    protected function compileCreateTable($blueprint, $command)
     {
         return trim(sprintf(
             '%s table %s (%s)',
@@ -547,24 +534,18 @@ class Schema extends BaseGrammar
      *
      * @return string
      */
-    protected function compileCreateEncoding($sql, Connection $connection, Blueprint $blueprint)
+    protected function compileCreateEncoding($sql, Blueprint $blueprint)
     {
         // First we will set the character set if one has been set on either the create
-        // blueprint itself or on the root configuration for the connection that the
-        // table is being created on. We will add these to the create table query.
+        // blueprint itself. We will add these to the create table query.
         if (isset($blueprint->charset)) {
             $sql .= ' default character set '.$blueprint->charset;
-        } elseif (! is_null($charset = $connection->getConfig('charset'))) {
-            $sql .= ' default character set '.$charset;
         }
 
         // Next we will add the collation to the create table statement if one has been
-        // added to either this create table blueprint or the configuration for this
-        // connection that the query is targeting. We'll add it to this SQL query.
+        // added to this create table blueprint. We'll add it to this SQL query.
         if (isset($blueprint->collation)) {
             $sql .= " collate '{$blueprint->collation}'";
-        } elseif (! is_null($collation = $connection->getConfig('collation'))) {
-            $sql .= " collate '{$collation}'";
         }
 
         return $sql;
@@ -577,12 +558,10 @@ class Schema extends BaseGrammar
      *
      * @return string
      */
-    protected function compileCreateEngine($sql, Connection $connection, Blueprint $blueprint)
+    protected function compileCreateEngine($sql, Blueprint $blueprint)
     {
         if (isset($blueprint->engine)) {
             return $sql.' engine = '.$blueprint->engine;
-        } elseif (! is_null($engine = $connection->getConfig('engine'))) {
-            return $sql.' engine = '.$engine;
         }
 
         return $sql;

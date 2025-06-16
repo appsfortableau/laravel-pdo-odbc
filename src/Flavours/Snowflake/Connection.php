@@ -4,12 +4,13 @@ namespace LaravelPdoOdbc\Flavours\Snowflake;
 
 use PDO;
 use PDOStatement;
+use DateTimeInterface;
+use LaravelPdoOdbc\ODBCConnection;
+
 use function is_bool;
 use function is_null;
-use DateTimeInterface;
 use function is_float;
 use function is_string;
-use LaravelPdoOdbc\ODBCConnection;
 
 class Connection extends ODBCConnection
 {
@@ -30,10 +31,10 @@ class Connection extends ODBCConnection
         $queryGrammar = $this->getConfig('options.grammar.query');
 
         if ($queryGrammar) {
-            return new $queryGrammar();
+            return new $queryGrammar($this);
         }
 
-        return new Grammars\Query();
+        return new Grammars\Query($this);
     }
 
     public function getDefaultSchemaGrammar()
@@ -41,10 +42,10 @@ class Connection extends ODBCConnection
         $schemaGrammar = $this->getConfig('options.grammar.schema');
 
         if ($schemaGrammar) {
-            return new $schemaGrammar();
+            return new $schemaGrammar($this);
         }
 
-        return new Grammars\Schema();
+        return new Grammars\Schema($this);
     }
 
     /**

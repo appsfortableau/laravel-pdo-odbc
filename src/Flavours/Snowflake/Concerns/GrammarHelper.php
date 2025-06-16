@@ -2,12 +2,12 @@
 
 namespace LaravelPdoOdbc\Flavours\Snowflake\Concerns;
 
-use function count;
-use Illuminate\Support\Str;
 use Illuminate\Database\Query\Expression;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\ColumnDefinition;
 use LaravelPdoOdbc\Flavours\Snowflake\Processor;
+use Illuminate\Support\Str;
+
+use function count;
 
 /**
  * This code is shared between the Query and Schema grammar.
@@ -31,15 +31,15 @@ trait GrammarHelper
     /**
      * Wrap a table in keyword identifiers.
      *
-     * @param \Illuminate\Database\Query\Expression|string $table
+     * @param \Illuminate\Database\Query\Expression|Illuminate\Database\Schema\Blueprint|string $table
      *
      * @return string
      */
-    public function wrapTable($table)
+    public function wrapTable($table, $prefix = null)
     {
         if (method_exists($this, 'isExpression') && !$this->isExpression($table)) {
             $table = Processor::wrapTable($table);
-            return $this->wrap($this->tablePrefix . $table, true);
+            return $this->wrap($prefix . $table, true);
         }
 
         return $this->getValue($table);
@@ -83,7 +83,6 @@ trait GrammarHelper
      */
     protected function wrapColumn($column)
     {
-
         if (method_exists($this, 'isExpression') && $this->isExpression($column)) {
             return $this->getValue($column);
         }
@@ -93,7 +92,11 @@ trait GrammarHelper
         }
 
         if ('*' !== $column) {
-            return str_replace('"', '', $column);
+            if (! env('SNOWFLAKE_COLUMNS_CASE_SENSITIVE', false)) {
+                return str_replace('"', '', Str::upper($column));
+            }
+
+            return '"'.str_replace('"', '""', $column).'"';
         }
 
         return $column;
