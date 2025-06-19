@@ -11,7 +11,7 @@ use function is_float;
 
 use const FILTER_VALIDATE_BOOLEAN;
 
-class Statement80 extends PDOStatement
+class Statement extends PDOStatement
 {
     protected $pdo = null;
 
