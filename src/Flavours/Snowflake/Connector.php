@@ -55,7 +55,7 @@ class Connector extends ODBCConnector implements OdbcDriver
             // create connection
             $db = new Connection($connection, $database, $prefix, $config);
             if (!env('SNOWFLAKE_DISABLE_FORCE_QUOTED_IDENTIFIER')) {
-                $connection->exec('ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = false'));
+                $connection->exec('ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = false');
             }
             
             // set default fetch mode for PDO
