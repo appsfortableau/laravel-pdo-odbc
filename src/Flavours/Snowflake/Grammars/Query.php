@@ -137,7 +137,7 @@ class Query extends Grammar
      */
     public function compileTruncate(Builder $query)
     {
-        return 'trunate table '.$this->wrapTable($query->from);
+        return ['truncate table '.$this->wrapTable($query->from) => []];
     }
 
     /**
