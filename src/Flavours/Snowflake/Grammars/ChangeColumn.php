@@ -28,14 +28,14 @@ class ChangeColumn
      *
      * @return array
      */
-    public static function compile(Grammar $grammar, Blueprint $blueprint, Fluent $command, Connection $connection)
+    public static function compile(Grammar $grammar, Blueprint $blueprint, Fluent $command)
     {
         $type = $command->offsetGet('name'); // can be: change, dropColumn, renameColumn
 
         if ('dropColumn' === $type) {
             return $grammar->compileDropColumn($blueprint, $command);
         } elseif ('renameColumn' === $type) {
-            return $grammar->compileRenameColumn($blueprint, $command, $connection);
+            return $grammar->compileRenameColumn($blueprint, $command);
         }
 
         return $grammar->compileChangeColumn($blueprint, $command);
