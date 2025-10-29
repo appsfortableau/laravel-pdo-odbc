@@ -4,6 +4,7 @@ namespace LaravelPdoOdbc\Flavours\Snowflake\PDO;
 
 use PDO;
 use PDOStatement;
+use Illuminate\Support\Str;
 
 use function call_user_func_array;
 use function func_get_args;
