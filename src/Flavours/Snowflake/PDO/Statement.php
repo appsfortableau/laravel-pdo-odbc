@@ -92,6 +92,11 @@ class Statement extends PDOStatement
             $query = reset($query);
         }
 
+        // When DDL, just execute directly
+        if (Str::startsWith(strtoupper(trim($query)), ['CREATE', 'ALTER', 'DROP'])) {
+            return (bool) $this->pdo->exec($query);
+        }
+        
         // reset PDO Statement for "parent"
         $this->exec = $this->pdo->prepare($query, [PDO::ATTR_STATEMENT_CLASS => [PDOStatement::class]]);
 
