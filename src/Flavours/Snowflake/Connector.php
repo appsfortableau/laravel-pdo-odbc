@@ -41,6 +41,7 @@ class Connector extends ODBCConnector implements OdbcDriver
         // custom Statement class to resolve Streaming value and parameters.
         $connection->setAttribute(PDO::ATTR_STATEMENT_CLASS, [\LaravelPdoOdbc\Flavours\Snowflake\PDO\Statement::class, [$connection]]);
 
+        $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $connection;
     }
 
