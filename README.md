@@ -65,6 +65,21 @@ SNOWFLAKE_COLUMNS_CASE_SENSITIVE=false
 SNOWFLAKE_COLUMNS_CASE_SENSITIVE=true
 ```
 
+### Snowflake Query Grammar options
+
+When using the Snowflake flavour, the query grammar compiles `LIKE` clauses as
+`ILIKE` by default (case-insensitive). You can disable this behavior per
+connection:
+
+```php
+'snowflake_pdo' => [
+    // ...
+    'options' => [
+        'use_ilike' => false,
+    ],
+],
+```
+
 ## Usage
 
 Configuring the package is straightforward:

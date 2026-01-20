@@ -22,9 +22,66 @@ class Query extends Grammar
      */
     protected $operators = [
         '=', '<', '>', '<=', '>=', '<>', '!=',
-        'like',
+        'like', 'not like',
+        'ilike', 'not ilike',
         // '&', '|', '<<', '>>',
     ];
+
+    /**
+     * Determine if this connection should compile LIKE as ILIKE by default.
+     */
+    protected function shouldUseIlike(): bool
+    {
+        $value = $this->connection?->getConfig('options.use_ilike');
+
+        return $value === null ? true : (bool) $value;
+    }
+
+    /**
+     * Compile a basic where clause.
+     *
+     * Snowflake supports both LIKE (case-sensitive) and ILIKE (case-insensitive).
+     * This package defaults to ILIKE for broader compatibility with typical
+     * Laravel expectations (case-insensitive search), but can be disabled via:
+     * `options.use_ilike = false`.
+     *
+     * @param  array  $where
+     */
+    protected function whereBasic(Builder $query, $where)
+    {
+        $operator = strtolower($where['operator']);
+
+        if ($this->shouldUseIlike()) {
+            if ($operator === 'like') {
+                $where['operator'] = 'ilike';
+            } elseif ($operator === 'not like') {
+                $where['operator'] = 'not ilike';
+            }
+        }
+
+        $value = $this->parameter($where['value']);
+
+        return $this->wrap($where['column']).' '.$where['operator'].' '.$value;
+    }
+
+    /**
+     * Compile a "where like" clause.
+     *
+     * @param  array  $where
+     */
+    protected function whereLike(Builder $query, $where)
+    {
+        $caseSensitive = (bool) ($where['caseSensitive'] ?? false);
+        $operator = $caseSensitive ? 'like' : 'ilike';
+
+        if (($where['not'] ?? false) === true) {
+            $operator = 'not '.$operator;
+        }
+
+        $value = $this->parameter($where['value']);
+
+        return $this->wrap($where['column']).' '.$operator.' '.$value;
+    }
 
     /**
      * The components that make up a select clause.
@@ -267,9 +324,25 @@ class Query extends Grammar
      */
     protected function dateBasedWhere($type, Builder $query, $where)
     {
+        $column = $this->wrap($where['column']);
         $value = $this->parameter($where['value']);
 
-        return "strftime('{$type}', {$this->wrap($where['column'])}) {$where['operator']} cast({$value} as text)";
+        // For full date comparisons rely on a native date cast instead of string formatting
+        if ('%Y-%m-%d' === $type) {
+            return "{$column} {$where['operator']} {$value}::DATE";
+        }
+
+        // Map generic formats to Snowflake TO_VARCHAR patterns
+        $format = match ($type) {
+            '%Y-%m-%d' => 'YYYY-MM-DD',
+            '%d' => 'DD',
+            '%m' => 'MM',
+            '%Y' => 'YYYY',
+            '%H:%M:%S' => 'HH24:MI:SS',
+            default => 'YYYY-MM-DD',
+        };
+
+        return "TO_VARCHAR({$column}, '{$format}') {$where['operator']} {$value}";
     }
 
     /**
