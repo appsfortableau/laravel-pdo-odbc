@@ -62,6 +62,9 @@ class Connection extends ODBCConnection
             $type = PDO::PARAM_STR;
             if (is_bool($value)) {
                 $value = $value ? 'TRUE' : 'FALSE';
+            } else if(is_string($value) && ctype_digit($value) && strlen($value) > 1 && $value[0] === '0'){
+                // Preserve numeric strings with leading zeros (e.g. "00123") as strings
+                $type = PDO::PARAM_STR;
             } elseif (is_numeric($value)) {
                 $type = PDO::PARAM_INT;
             }
@@ -93,6 +96,9 @@ class Connection extends ODBCConnection
                 $bindings[$key] = (bool) $value;
             } elseif (is_float($value)) {
                 $bindings[$key] = (float) $value;
+            } else if(is_string($value) && ctype_digit($value) && strlen($value) > 1 && $value[0] === '0'){
+                // Preserve numeric strings with leading zeros (e.g. "00123") as strings
+                $bindings[$key] = $value;
             } elseif (is_numeric($value)) {
                 $bindings[$key] = (int) $value;
             }
