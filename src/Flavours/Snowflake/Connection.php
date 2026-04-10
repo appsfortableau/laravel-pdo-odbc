@@ -15,6 +15,39 @@ use function is_string;
 class Connection extends ODBCConnection
 {
     /**
+     * Temporary file path for private key
+     */
+    protected ?string $tempKeyFile = null;
+
+    /**
+     * Create a new database connection instance.
+     *
+     * @param PDO $pdo
+     * @param string $database
+     * @param string $tablePrefix
+     * @param array $config
+     */
+    public function __construct($pdo, $database = '', $tablePrefix = '', array $config = [])
+    {
+        parent::__construct($pdo, $database, $tablePrefix, $config);
+
+        // On Windows we need to create a temp file for the key. Store the path for cleanup in destruct.
+        if (isset($config['PRIVATE_KEY_FILE'])) {
+            $this->tempKeyFile = $config['PRIVATE_KEY_FILE'];
+        }
+    }
+
+    /**
+     * Clean up temporary key file when connection is destroyed
+     */
+    public function __destruct()
+    {
+        if ($this->tempKeyFile && file_exists($this->tempKeyFile)) {
+            unlink($this->tempKeyFile);
+        }
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getSchemaBuilder()

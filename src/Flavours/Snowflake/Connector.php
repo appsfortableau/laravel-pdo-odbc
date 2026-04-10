@@ -28,17 +28,31 @@ class Connector extends ODBCConnector implements OdbcDriver
         $connection = null;
         $usingSnowflakeDriver = $config['driver'] === 'snowflake_native';
 
-                // Handle Snowflake key-pair
+        // Handle Snowflake key-pair
         if (Arr::get($config, 'authenticator') === 'key_pair') {
             $privateKey = trim((string) Arr::get($config, 'private_key', ''));
 
             if ($privateKey !== '') {
-                $config['priv_key_base64'] = base64_encode($privateKey);
                 $config['authenticator'] = 'SNOWFLAKE_JWT';
                 $config['odbc_driver'] = $config['odbcdriver'];
 
-                // Force ODBCConnector to build DSN dynamically
-                $allowedKeys = ['driver','server','database','warehouse','schema','port','priv_key_pwd','odbc_driver','authenticator','priv_key_base64', 'odbcdriver', 'username', 'options'];
+                if (defined('PHP_WINDOWS_VERSION_MAJOR') || stripos(PHP_OS, 'WIN') === 0) {
+                    // Windows Snowflake ODBC does not support base64, so falling back to private key file path
+                    $tempFile = tempnam(sys_get_temp_dir(), 'snowflake_key_');
+                    file_put_contents($tempFile, $privateKey);
+                    chmod($tempFile, 0600); // Secure the file
+
+                    $config['PRIV_KEY_FILE'] = $tempFile;
+                    if (isset($config['priv_key_pwd'])) {
+                        $config['PRIV_KEY_FILE_PWD'] = $config['priv_key_pwd'];
+                    }
+
+                    $allowedKeys = ['driver','server','database','warehouse','schema','port','PRIV_KEY_FILE_PWD','odbc_driver','authenticator','PRIV_KEY_FILE', 'odbcdriver', 'username', 'options'];
+                } else {
+                    $config['priv_key_base64'] = base64_encode($privateKey);
+                    $allowedKeys = ['driver','server','database','warehouse','schema','port','priv_key_pwd','odbc_driver','authenticator','priv_key_base64', 'odbcdriver', 'username', 'options'];
+                }
+
                 $config = array_intersect_key($config, array_flip($allowedKeys));
             }
             else{
