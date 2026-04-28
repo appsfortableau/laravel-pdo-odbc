@@ -67,7 +67,12 @@ class Statement extends PDOStatement
             } elseif (PDO::PARAM_NULL === $type) {
                 $val = 'null';
             } else {
-                $val = "'" . addslashes($val) . "'";
+                // Use SQL-standard quote doubling instead of addslashes: Snowflake does not treat backslash
+                // as an escape character in string literals, so addslashes was storing literal backslashes
+                // and corrupting multi-byte UTF-8 sequences (e.g. Chinese characters). Doubling single
+                // quotes is the correct Snowflake escape and is safe against SQL injection. Double quotes
+                // are harmless inside single-quoted literals so need no escaping.
+                $val = "'" . str_replace("'", "''", $val) . "'";
             }
 
             $bindings[$key] = $val;
