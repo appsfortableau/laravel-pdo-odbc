@@ -129,12 +129,13 @@ class Connection extends ODBCConnection
                 $bindings[$key] = (bool) $value;
             } elseif (is_float($value)) {
                 $bindings[$key] = (float) $value;
-            } else if(is_string($value) && ctype_digit($value) && strlen($value) > 1 && $value[0] === '0'){
-                // Preserve numeric strings with leading zeros (e.g. "00123") as strings
-                $bindings[$key] = $value;
-            } elseif (is_numeric($value)) {
-                $bindings[$key] = (int) $value;
             }
+            // Numeric-looking strings (e.g. a VARCHAR primary key "3") are intentionally
+            // left untouched here. bindValues() only trusts the native PHP type (is_int/
+            // is_float) to decide PDO::PARAM_INT vs PARAM_STR; casting a numeric string to
+            // int here would defeat that check and bind it unquoted against a non-numeric
+            // column, which Snowflake's ODBC driver rejects severely enough to crash the
+            // worker process instead of raising a catchable error.
         }
 
         return $bindings;
