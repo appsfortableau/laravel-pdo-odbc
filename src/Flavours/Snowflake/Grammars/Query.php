@@ -4,6 +4,7 @@ namespace LaravelPdoOdbc\Flavours\Snowflake\Grammars;
 
 use function is_array;
 
+use Closure;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,24 @@ use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
 
 class Query extends Grammar
 {
-    use GrammarHelper;
+    use GrammarHelper {
+        wrapTable as protected wrapTableIdentifier;
+    }
+
+    /**
+     * Stack of table names/aliases for the queries currently being compiled.
+     * Used to tell a "table.column" reference apart from a column whose name
+     * contains a dot, e.g. "ex. Work Date".
+     *
+     * @var array<int, string[]>
+     */
+    protected array $compilingTables = [];
+
+    /**
+     * True while a table name is being wrapped, so "db.schema.table" keeps
+     * being split into segments.
+     */
+    protected bool $wrappingTable = false;
 
     /**
      * All of the available clause operators.
@@ -114,11 +132,119 @@ class Query extends Grammar
      */
     public function compileUpdate(Builder $query, array $values)
     {
-        if (isset($query->joins) || isset($query->limit)) {
-            return $this->compileUpdateWithJoinsOrLimit($query, $values);
+        return $this->withQueryTables($query, function () use ($query, $values) {
+            if (isset($query->joins) || isset($query->limit)) {
+                return $this->compileUpdateWithJoinsOrLimit($query, $values);
+            }
+
+            return parent::compileUpdate($query, $values);
+        });
+    }
+
+    /**
+     * Compile a select query into SQL.
+     *
+     * @return string
+     */
+    public function compileSelect(Builder $query)
+    {
+        return $this->withQueryTables($query, fn () => parent::compileSelect($query));
+    }
+
+    /**
+     * Run the callback with the tables of the given query registered, so that
+     * wrap() only splits off a prefix that is a real table or alias.
+     */
+    protected function withQueryTables(Builder $query, Closure $callback)
+    {
+        $tables = [];
+
+        foreach (array_merge([$query->from], array_map(fn ($join) => $join->table, $query->joins ?? [])) as $table) {
+            if (! is_string($table)) {
+                continue;
+            }
+
+            $segments = preg_split('/\s+as\s+/i', $table);
+            $tables[] = $segments[0];
+            $tables[] = last(explode('.', $segments[0]));
+
+            if (isset($segments[1])) {
+                $tables[] = $segments[1];
+            }
         }
 
-        return parent::compileUpdate($query, $values);
+        $this->compilingTables[] = array_unique($tables);
+
+        try {
+            return $callback();
+        } finally {
+            array_pop($this->compilingTables);
+        }
+    }
+
+    /**
+     * Find the table or alias the identifier is prefixed with, if any.
+     */
+    protected function matchTablePrefix(string $value): ?string
+    {
+        $tables = array_merge(...($this->compilingTables ?: [[]]));
+
+        // longest first, so "DB.SCHEMA.TABLE" wins over "TABLE"
+        usort($tables, fn ($a, $b) => strlen($b) <=> strlen($a));
+
+        foreach ($tables as $table) {
+            if (str_starts_with($value, $table.'.')) {
+                return $table;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Wrap a value in keyword identifiers.
+     *
+     * While a query is compiled, a dot only separates table and column when the
+     * part before it is one of the query's tables or aliases. Otherwise the dot
+     * is part of the column name.
+     *
+     * @param  \Illuminate\Contracts\Database\Query\Expression|string  $value
+     * @return string
+     */
+    public function wrap($value)
+    {
+        if ($this->wrappingTable
+            || empty($this->compilingTables)
+            || $this->isExpression($value)
+            || ! str_contains($value, '.')
+            || stripos($value, ' as ') !== false
+            || $this->isJsonSelector($value)
+        ) {
+            return parent::wrap($value);
+        }
+
+        if ($table = $this->matchTablePrefix($value)) {
+            return $this->wrapTable($table).'.'.$this->wrapColumn(substr($value, strlen($table) + 1));
+        }
+
+        return $this->wrapColumn($value);
+    }
+
+    /**
+     * Wrap a table in keyword identifiers.
+     *
+     * @return string
+     */
+    public function wrapTable($table, $prefix = null)
+    {
+        $wrapping = $this->wrappingTable;
+        $this->wrappingTable = true;
+
+        try {
+            return $this->wrapTableIdentifier($table, $prefix);
+        } finally {
+            $this->wrappingTable = $wrapping;
+        }
     }
 
     /**
@@ -180,11 +306,13 @@ class Query extends Grammar
      */
     public function compileDelete(Builder $query)
     {
-        if (isset($query->joins) || isset($query->limit)) {
-            return $this->compileDeleteWithJoinsOrLimit($query);
-        }
+        return $this->withQueryTables($query, function () use ($query) {
+            if (isset($query->joins) || isset($query->limit)) {
+                return $this->compileDeleteWithJoinsOrLimit($query);
+            }
 
-        return parent::compileDelete($query);
+            return parent::compileDelete($query);
+        });
     }
 
     /**
@@ -357,11 +485,13 @@ class Query extends Grammar
         return collect($values)->reject(function ($value, $key) {
             return $this->isJsonSelector($key);
         })->merge($jsonGroups)->map(function ($value, $key) use ($jsonGroups) {
-            $column = last(explode('.', $key));
+            // only strip a real "table." prefix, a dot can be part of the column name
+            $table = $this->matchTablePrefix($key);
+            $column = $table ? substr($key, strlen($table) + 1) : $key;
 
             $value = isset($jsonGroups[$key]) ? $this->compileJsonPatch($column, $value) : $this->parameter($value);
 
-            return $this->wrap($column).' = '.$value;
+            return $this->wrapColumn($column).' = '.$value;
         })->implode(', ');
     }
 
