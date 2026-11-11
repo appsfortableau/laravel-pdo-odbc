@@ -19,16 +19,13 @@ class Query extends Grammar
 
     /**
      * Stack of table names/aliases for the queries currently being compiled.
-     * Used to tell a "table.column" reference apart from a column whose name
-     * contains a dot, e.g. "ex. Work Date".
      *
      * @var array<int, string[]>
      */
     protected array $compilingTables = [];
 
     /**
-     * True while a table name is being wrapped, so "db.schema.table" keeps
-     * being split into segments.
+     * True while wrapping a table name, which is always split on its dots.
      */
     protected bool $wrappingTable = false;
 
@@ -167,9 +164,10 @@ class Query extends Grammar
      */
     protected function pushQueryTables(Builder $query): void
     {
+        $queryTables = array_merge([$query->from], array_map(fn ($join) => $join->table, $query->joins ?? []));
         $tables = [];
 
-        foreach (array_merge([$query->from], array_map(fn ($join) => $join->table, $query->joins ?? [])) as $table) {
+        foreach ($queryTables as $table) {
             if (! is_string($table)) {
                 continue;
             }
@@ -193,7 +191,7 @@ class Query extends Grammar
     {
         $tables = array_merge(...($this->compilingTables ?: [[]]));
 
-        // longest first, so "DB.SCHEMA.TABLE" wins over "TABLE"
+        // Longest first, so "DB.SCHEMA.TABLE" wins over "TABLE".
         usort($tables, fn ($a, $b) => strlen($b) <=> strlen($a));
 
         foreach ($tables as $table) {
@@ -493,7 +491,7 @@ class Query extends Grammar
         return collect($values)->reject(function ($value, $key) {
             return $this->isJsonSelector($key);
         })->merge($jsonGroups)->map(function ($value, $key) use ($jsonGroups) {
-            // only strip a real "table." prefix, a dot can be part of the column name
+            // Only strip a real "table." prefix, as a dot can be part of the column name.
             $table = $this->matchTablePrefix($key);
             $column = $table ? substr($key, strlen($table) + 1) : $key;
 
