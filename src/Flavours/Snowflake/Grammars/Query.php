@@ -4,7 +4,6 @@ namespace LaravelPdoOdbc\Flavours\Snowflake\Grammars;
 
 use function is_array;
 
-use Closure;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -132,13 +131,17 @@ class Query extends Grammar
      */
     public function compileUpdate(Builder $query, array $values)
     {
-        return $this->withQueryTables($query, function () use ($query, $values) {
+        $this->pushQueryTables($query);
+
+        try {
             if (isset($query->joins) || isset($query->limit)) {
                 return $this->compileUpdateWithJoinsOrLimit($query, $values);
             }
 
             return parent::compileUpdate($query, $values);
-        });
+        } finally {
+            array_pop($this->compilingTables);
+        }
     }
 
     /**
@@ -148,14 +151,21 @@ class Query extends Grammar
      */
     public function compileSelect(Builder $query)
     {
-        return $this->withQueryTables($query, fn () => parent::compileSelect($query));
+        $this->pushQueryTables($query);
+
+        try {
+            return parent::compileSelect($query);
+        } finally {
+            array_pop($this->compilingTables);
+        }
     }
 
     /**
-     * Run the callback with the tables of the given query registered, so that
-     * wrap() only splits off a prefix that is a real table or alias.
+     * Register the tables and aliases of the given query, so that wrap() only
+     * splits off a prefix that is a real table or alias. Every push must be
+     * popped again once the query is compiled.
      */
-    protected function withQueryTables(Builder $query, Closure $callback)
+    protected function pushQueryTables(Builder $query): void
     {
         $tables = [];
 
@@ -174,12 +184,6 @@ class Query extends Grammar
         }
 
         $this->compilingTables[] = array_unique($tables);
-
-        try {
-            return $callback();
-        } finally {
-            array_pop($this->compilingTables);
-        }
     }
 
     /**
@@ -306,13 +310,17 @@ class Query extends Grammar
      */
     public function compileDelete(Builder $query)
     {
-        return $this->withQueryTables($query, function () use ($query) {
+        $this->pushQueryTables($query);
+
+        try {
             if (isset($query->joins) || isset($query->limit)) {
                 return $this->compileDeleteWithJoinsOrLimit($query);
             }
 
             return parent::compileDelete($query);
-        });
+        } finally {
+            array_pop($this->compilingTables);
+        }
     }
 
     /**
