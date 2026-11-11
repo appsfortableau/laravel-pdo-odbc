@@ -13,7 +13,21 @@ use LaravelPdoOdbc\Flavours\Snowflake\Concerns\GrammarHelper;
 
 class Query extends Grammar
 {
-    use GrammarHelper;
+    use GrammarHelper {
+        wrapTable as protected wrapTableIdentifier;
+    }
+
+    /**
+     * Stack of table names/aliases for the queries currently being compiled.
+     *
+     * @var array<int, string[]>
+     */
+    protected array $compilingTables = [];
+
+    /**
+     * True while wrapping a table name, which is always split on its dots.
+     */
+    protected bool $wrappingTable = false;
 
     /**
      * All of the available clause operators.
@@ -114,11 +128,125 @@ class Query extends Grammar
      */
     public function compileUpdate(Builder $query, array $values)
     {
-        if (isset($query->joins) || isset($query->limit)) {
-            return $this->compileUpdateWithJoinsOrLimit($query, $values);
+        $this->pushQueryTables($query);
+
+        try {
+            if (isset($query->joins) || isset($query->limit)) {
+                return $this->compileUpdateWithJoinsOrLimit($query, $values);
+            }
+
+            return parent::compileUpdate($query, $values);
+        } finally {
+            array_pop($this->compilingTables);
+        }
+    }
+
+    /**
+     * Compile a select query into SQL.
+     *
+     * @return string
+     */
+    public function compileSelect(Builder $query)
+    {
+        $this->pushQueryTables($query);
+
+        try {
+            return parent::compileSelect($query);
+        } finally {
+            array_pop($this->compilingTables);
+        }
+    }
+
+    /**
+     * Register the tables and aliases of the given query, so that wrap() only
+     * splits off a prefix that is a real table or alias. Every push must be
+     * popped again once the query is compiled.
+     */
+    protected function pushQueryTables(Builder $query): void
+    {
+        $queryTables = array_merge([$query->from], array_map(fn ($join) => $join->table, $query->joins ?? []));
+        $tables = [];
+
+        foreach ($queryTables as $table) {
+            if (! is_string($table)) {
+                continue;
+            }
+
+            $segments = preg_split('/\s+as\s+/i', $table);
+            $tables[] = $segments[0];
+            $tables[] = last(explode('.', $segments[0]));
+
+            if (isset($segments[1])) {
+                $tables[] = $segments[1];
+            }
         }
 
-        return parent::compileUpdate($query, $values);
+        $this->compilingTables[] = array_unique($tables);
+    }
+
+    /**
+     * Find the table or alias the identifier is prefixed with, if any.
+     */
+    protected function matchTablePrefix(string $value): ?string
+    {
+        $tables = array_merge(...($this->compilingTables ?: [[]]));
+
+        // Longest first, so "DB.SCHEMA.TABLE" wins over "TABLE".
+        usort($tables, fn ($a, $b) => strlen($b) <=> strlen($a));
+
+        foreach ($tables as $table) {
+            if (str_starts_with($value, $table.'.')) {
+                return $table;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Wrap a value in keyword identifiers.
+     *
+     * While a query is compiled, a dot only separates table and column when the
+     * part before it is one of the query's tables or aliases. Otherwise the dot
+     * is part of the column name.
+     *
+     * @param  \Illuminate\Contracts\Database\Query\Expression|string  $value
+     * @return string
+     */
+    public function wrap($value)
+    {
+        if ($this->wrappingTable
+            || empty($this->compilingTables)
+            || $this->isExpression($value)
+            || ! str_contains($value, '.')
+            || stripos($value, ' as ') !== false
+            || $this->isJsonSelector($value)
+        ) {
+            return parent::wrap($value);
+        }
+
+        if ($table = $this->matchTablePrefix($value)) {
+            return $this->wrapTable($table).'.'.$this->wrapColumn(substr($value, strlen($table) + 1));
+        }
+
+        return $this->wrapColumn($value);
+    }
+
+    /**
+     * Wrap a table in keyword identifiers.
+     *
+     * @return string
+     */
+    public function wrapTable($table, $prefix = null)
+    {
+        $wrapping = $this->wrappingTable;
+        $this->wrappingTable = true;
+
+        try {
+            return $this->wrapTableIdentifier($table, $prefix);
+        } finally {
+            $this->wrappingTable = $wrapping;
+        }
     }
 
     /**
@@ -180,11 +308,17 @@ class Query extends Grammar
      */
     public function compileDelete(Builder $query)
     {
-        if (isset($query->joins) || isset($query->limit)) {
-            return $this->compileDeleteWithJoinsOrLimit($query);
-        }
+        $this->pushQueryTables($query);
 
-        return parent::compileDelete($query);
+        try {
+            if (isset($query->joins) || isset($query->limit)) {
+                return $this->compileDeleteWithJoinsOrLimit($query);
+            }
+
+            return parent::compileDelete($query);
+        } finally {
+            array_pop($this->compilingTables);
+        }
     }
 
     /**
@@ -357,11 +491,13 @@ class Query extends Grammar
         return collect($values)->reject(function ($value, $key) {
             return $this->isJsonSelector($key);
         })->merge($jsonGroups)->map(function ($value, $key) use ($jsonGroups) {
-            $column = last(explode('.', $key));
+            // Only strip a real "table." prefix, as a dot can be part of the column name.
+            $table = $this->matchTablePrefix($key);
+            $column = $table ? substr($key, strlen($table) + 1) : $key;
 
             $value = isset($jsonGroups[$key]) ? $this->compileJsonPatch($column, $value) : $this->parameter($value);
 
-            return $this->wrap($column).' = '.$value;
+            return $this->wrapColumn($column).' = '.$value;
         })->implode(', ');
     }
 
